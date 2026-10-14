@@ -1,191 +1,263 @@
 /**
- * Zona de Tareas y Retos Semanales:
- * - Lista de tareas/retos prácticos asignados por el tutor.
- * - Filtros por estado: Pendientes, Entregadas, Revisadas y Retos.
- * - Modal para que el estudiante registre evidencia (notas, enlace, autoevaluación 1-5).
- * - Vista de tutor: crear nuevas tareas/retos y calificar/dar retroalimentación a entregas.
+ * Zona de Tareas y Libreta para Estudiante (Ingrid) y Tutor (Brian):
+ * - Estudiante (Ingrid): ve claramente sus tareas asignadas con fecha límite, y al hacer clic en "📸 Entregar libreta",
+ *   puede adjuntar fotos de su cuaderno (con la cámara del celular o archivo) y dejar notas de dudas.
+ * - Tutor (Brian): puede abrir el Banco de Tareas ECOEMS con 1 clic para asignarlas, revisar las fotos de libreta entregadas
+ *   y ponerle calificación de 1 a 10 con comentarios de retroalimentación.
  */
 import { useMemo, useState } from 'react'
 import {
-  Award, CalendarDays, CheckCircle2, Clock, ExternalLink, FileEdit, Filter,
-  MessageSquare, Plus, Send, Star, Trash2, Trophy, UploadCloud, X
+  Award, CalendarDays, Camera, CheckCircle2, ChevronRight, Clock,
+  Eye, FileText, Image as ImageIcon, Plus, Send, Sparkles, Star,
+  Trash2, Trophy, UploadCloud, X
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { SUBJECTS, SUBJECT_MAP } from '../data/subjects'
+import { TASK_CATALOG } from '../data/taskCatalog'
 import { daysFromNow, daysUntil, formatDate, toDateKey } from '../lib/date'
-import { PageHeader } from '../components/ui/Feedback'
 import { Modal } from '../components/ui/Modal'
 import { SubjectIcon } from '../components/ui/Icon'
 
 export default function Tasks() {
   const { state, actions, isTutor, toast } = useApp()
-  const [filter, setFilter] = useState('todas') // 'todas' | 'pendiente' | 'entregada' | 'revisada' | 'retos'
-  const [activeTask, setActiveTask] = useState(null)
-  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false)
-  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
-  const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false)
+  const [activeFilter, setActiveFilter] = useState('todas') // 'todas' | 'pendientes' | 'entregadas' | 'revisadas'
 
-  // Formulario de entrega (Estudiante)
+  // Modal de entrega para Ingrid
+  const [submitTask, setSubmitTask] = useState(null)
   const [evidenceNotes, setEvidenceNotes] = useState('')
-  const [evidenceLink, setEvidenceLink] = useState('')
-  const [selfRating, setSelfRating] = useState(5)
+  const [evidencePhoto, setEvidencePhoto] = useState(null)
 
-  // Formulario de revisión (Tutor)
+  // Modal de calificación para Brian (Tutor)
+  const [reviewTask, setReviewTask] = useState(null)
   const [reviewGrade, setReviewGrade] = useState(10)
   const [reviewFeedback, setReviewFeedback] = useState('')
 
-  // Formulario de nueva tarea (Tutor)
-  const [newTaskTitle, setNewTaskTitle] = useState('')
-  const [newTaskDesc, setNewTaskDesc] = useState('')
-  const [newTaskSubject, setNewTaskSubject] = useState('matematicas')
-  const [newTaskType, setNewTaskType] = useState('tarea') // 'tarea' | 'reto'
-  const [newTaskPoints, setNewTaskPoints] = useState(25)
-  const [newTaskDays, setNewTaskDays] = useState(3)
+  // Modal de catálogo de tareas para Brian (Tutor)
+  const [isCatalogOpen, setIsCatalogOpen] = useState(false)
+  const [catalogSubjectFilter, setCatalogSubjectFilter] = useState('todas')
+  const [selectedCatalogTask, setSelectedCatalogTask] = useState(null)
+  const [customDays, setCustomDays] = useState(3)
+  const [customPoints, setCustomPoints] = useState(25)
 
+  // Visor de foto de libreta en pantalla completa
+  const [previewPhoto, setPreviewPhoto] = useState(null)
+
+  const tasks = state.tasks
+
+  // Conteo de tareas
+  const counts = useMemo(() => {
+    return {
+      todas: tasks.length,
+      pendientes: tasks.filter((t) => t.status === 'pendiente').length,
+      entregadas: tasks.filter((t) => t.status === 'entregada').length,
+      revisadas: tasks.filter((t) => t.status === 'revisada').length,
+    }
+  }, [tasks])
+
+  // Tareas filtradas
   const filteredTasks = useMemo(() => {
-    return state.tasks.filter((t) => {
-      if (filter === 'retos') return t.type === 'reto'
-      if (filter !== 'todas') return t.status === filter
-      return true
-    })
-  }, [state.tasks, filter])
+    if (activeFilter === 'pendientes') return tasks.filter((t) => t.status === 'pendiente')
+    if (activeFilter === 'entregadas') return tasks.filter((t) => t.status === 'entregada')
+    if (activeFilter === 'revisadas') return tasks.filter((t) => t.status === 'revisada')
+    return tasks
+  }, [tasks, activeFilter])
 
-  // Abrir modal de entrega
+  // Catálogo de tareas filtrado
+  const filteredCatalog = useMemo(() => {
+    if (catalogSubjectFilter === 'todas') return TASK_CATALOG
+    return TASK_CATALOG.filter((t) => t.subjectId === catalogSubjectFilter)
+  }, [catalogSubjectFilter])
+
+  // 1. Abrir entrega de Ingrid
   const handleOpenSubmit = (task) => {
-    setActiveTask(task)
+    setSubmitTask(task)
     setEvidenceNotes(task.evidence?.notes || '')
-    setEvidenceLink(task.evidence?.link || '')
-    setSelfRating(task.evidence?.selfRating || 5)
-    setIsSubmitModalOpen(true)
+    setEvidencePhoto(task.evidence?.photo || null)
   }
 
-  // Guardar entrega
+  // Leer foto de libreta de Ingrid
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ tone: 'warning', title: 'La foto es muy pesada. Elige una de menos de 5MB.' })
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      setEvidencePhoto(event.target.result)
+      toast({ tone: 'success', title: '¡Foto de libreta adjuntada! 📸' })
+    }
+    reader.readAsDataURL(file)
+  }
+
+  // Guardar entrega de Ingrid
   const handleSaveSubmit = () => {
-    if (!evidenceNotes.trim()) {
-      toast({ tone: 'warning', title: 'Agrega una breve nota de tu entrega' })
+    if (!evidenceNotes.trim() && !evidencePhoto) {
+      toast({ tone: 'warning', title: 'Escribe una nota o adjunta la foto de tu libreta.' })
       return
     }
 
     actions.updateTask(
-      activeTask.id,
+      submitTask.id,
       {
         status: 'entregada',
         evidence: {
           notes: evidenceNotes,
-          link: evidenceLink,
+          photo: evidencePhoto,
           submittedAt: toDateKey(),
-          selfRating,
         },
       },
-      true // cuenta para streak
+      true // Suma racha
     )
 
-    setIsSubmitModalOpen(false)
+    setSubmitTask(null)
     toast({
       tone: 'success',
-      title: '¡Evidencia enviada! 🎉',
-      description: `Tu tutor revisará tu entrega de "${activeTask.title}".`,
+      title: '¡Tarea entregada! 🎉',
+      description: 'Brian ya puede revisar tu libreta y dejarte comentarios.',
     })
   }
 
-  // Abrir modal de revisión (Tutor)
+  // 2. Abrir calificación de Brian
   const handleOpenReview = (task) => {
-    setActiveTask(task)
-    setReviewGrade(task.review?.grade || 10)
-    setReviewFeedback(task.review?.feedback || '')
-    setIsReviewModalOpen(true)
+    setReviewTask(task)
+    setReviewGrade(task.review?.grade ?? 10)
+    setReviewFeedback(task.review?.feedback ?? '')
   }
 
-  // Guardar calificación del tutor
+  // Guardar calificación de Brian
   const handleSaveReview = () => {
-    actions.updateTask(activeTask.id, {
+    if (!reviewTask) return
+
+    actions.updateTask(reviewTask.id, {
       status: 'revisada',
       review: {
         grade: Number(reviewGrade),
         feedback: reviewFeedback,
+        reviewedAt: toDateKey(),
       },
     })
-    setIsReviewModalOpen(false)
+
+    setReviewTask(null)
     toast({
       tone: 'success',
       title: 'Tarea calificada',
-      description: `Nota asignada: ${reviewGrade}/10`,
+      description: `Ingrid verá su calificación de ${reviewGrade}/10.`,
     })
   }
 
-  // Crear nueva tarea (Tutor)
-  const handleCreateTask = () => {
-    if (!newTaskTitle.trim()) {
-      toast({ tone: 'warning', title: 'El título es obligatorio' })
-      return
-    }
+  // 3. Asignar tarea desde el catálogo para Brian
+  const handleAssignCatalogTask = () => {
+    if (!selectedCatalogTask) return
 
     actions.addTask({
-      title: newTaskTitle,
-      description: newTaskDesc,
-      subjectId: newTaskSubject,
-      type: newTaskType,
-      points: Number(newTaskPoints),
-      dueDate: daysFromNow(Number(newTaskDays)),
+      title: selectedCatalogTask.title,
+      description: selectedCatalogTask.description,
+      subjectId: selectedCatalogTask.subjectId,
+      type: selectedCatalogTask.type,
+      points: Number(customPoints),
+      dueDate: daysFromNow(Number(customDays)),
     })
 
-    setIsNewTaskModalOpen(false)
-    setNewTaskTitle('')
-    setNewTaskDesc('')
+    setSelectedCatalogTask(null)
+    setIsCatalogOpen(false)
     toast({
       tone: 'success',
-      title: 'Tarea asignada exitosamente',
-      description: `Fecha límite: en ${newTaskDays} días`,
+      title: '¡Tarea asignada con éxito! 🚀',
+      description: `Asignaste "${selectedCatalogTask.title}" a Ingrid.`,
     })
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        eyebrow="Tutoría y Compromisos"
-        title="Zona de Tareas y Retos"
-        description="Actividades prácticas diseñadas para afianzar conocimientos clave antes del examen COMIPEMS."
-        actions={
-          isTutor && (
-            <button
-              type="button"
-              onClick={() => setIsNewTaskModalOpen(true)}
-              className="btn btn-mint text-sm font-bold"
-            >
-              <Plus size={16} /> Asignar nueva tarea
-            </button>
-          )
-        }
-      />
+    <div className="space-y-6 max-w-4xl mx-auto">
+      {/* ───────── ENCABEZADO PRINCIPAL ───────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-extrabold text-white">
+            {isTutor ? 'Gestión de Tareas y Libreta' : 'Tus Tareas y Retos ECOEMS'}
+          </h1>
+          <p className="text-xs text-slate-400 mt-1">
+            {isTutor
+              ? `Supervisa los ejercicios de ${state.profile.student}, revisa fotos de su libreta y asígnale nuevas actividades.`
+              : 'Resuelve tus ejercicios en tu cuaderno y sube fotos de tu libreta para que Brian las revise.'}
+          </p>
+        </div>
 
-      {/* Filtros */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-semibold text-ink-300 flex items-center gap-1">
-          <Filter size={13} /> Filtrar:
-        </span>
-        {[
-          { id: 'todas', label: 'Todas' },
-          { id: 'pendiente', label: 'Pendientes' },
-          { id: 'entregada', label: 'Entregadas' },
-          { id: 'revisada', label: 'Revisadas' },
-          { id: 'retos', label: 'Solo Retos' },
-        ].map((f) => (
+        {/* Botón para que Brian asigne tareas del catálogo */}
+        {isTutor && (
           <button
-            key={f.id}
-            onClick={() => setFilter(f.id)}
-            className={`chip cursor-pointer transition-all ${
-              filter === f.id
-                ? 'border-mint-400 bg-mint-400/20 text-mint-300 font-bold'
-                : 'border-white/10 bg-white/5 text-ink-300 hover:text-white'
-            }`}
+            type="button"
+            onClick={() => setIsCatalogOpen(true)}
+            className="flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-600/20 transition cursor-pointer shrink-0"
           >
-            {f.label}
+            <Plus size={16} /> + Asignar del Catálogo ECOEMS
           </button>
-        ))}
+        )}
       </div>
 
-      {/* Lista de tareas */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      {/* ───────── FILTROS DE TAREAS ───────── */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+        <button
+          type="button"
+          onClick={() => setActiveFilter('todas')}
+          className={`rounded-xl px-3.5 py-2 font-bold transition cursor-pointer ${
+            activeFilter === 'todas'
+              ? 'bg-slate-800 text-white border border-slate-700'
+              : 'bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800/60'
+          }`}
+        >
+          Todas ({counts.todas})
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveFilter('pendientes')}
+          className={`rounded-xl px-3.5 py-2 font-bold transition cursor-pointer ${
+            activeFilter === 'pendientes'
+              ? 'bg-slate-800 text-white border border-slate-700'
+              : 'bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800/60'
+          }`}
+        >
+          {isTutor ? 'Pendientes de Ingrid' : 'Por hacer'} ({counts.pendientes})
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveFilter('entregadas')}
+          className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 font-bold transition cursor-pointer ${
+            activeFilter === 'entregadas'
+              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+              : counts.entregadas > 0
+              ? 'bg-amber-500/10 text-amber-300 border border-amber-500/30'
+              : 'bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800/60'
+          }`}
+        >
+          <span>Por calificar</span>
+          {counts.entregadas > 0 && (
+            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-black text-slate-950">
+              {counts.entregadas}
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveFilter('revisadas')}
+          className={`rounded-xl px-3.5 py-2 font-bold transition cursor-pointer ${
+            activeFilter === 'revisadas'
+              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+              : 'bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800/60'
+          }`}
+        >
+          Revisadas ({counts.revisadas})
+        </button>
+      </div>
+
+      {/* ───────── LISTA DE TAREAS ───────── */}
+      <div className="space-y-3.5">
         {filteredTasks.map((task) => {
           const days = daysUntil(task.dueDate)
           const isPending = task.status === 'pendiente'
@@ -196,147 +268,162 @@ export default function Tasks() {
           return (
             <div
               key={task.id}
-              className={`card card-hover flex flex-col justify-between p-5 space-y-4 border ${
-                task.type === 'reto'
-                  ? 'border-amber-400/30 bg-linear-to-br from-amber-400/5 to-ink-850/80'
-                  : 'border-white/8'
+              className={`rounded-2xl p-5 space-y-4 border transition ${
+                isReviewed
+                  ? 'border-emerald-500/20 bg-slate-900/60'
+                  : isSubmitted
+                  ? 'border-amber-400/30 bg-amber-500/5'
+                  : 'border-slate-800 bg-slate-900/80'
               }`}
             >
-              <div>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    <SubjectIcon subjectId={task.subjectId} size="sm" />
-                    <div>
-                      <span className="text-xs font-semibold text-ink-300">
-                        {subject ? subject.name : 'General'}
-                      </span>
-                      <h3 className="font-bold text-white text-base leading-snug">
-                        {task.title}
-                      </h3>
-                    </div>
+              {/* Encabezado de la tarjeta */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-bold" style={{ color: subject?.color || '#38bdf8' }}>
+                      {subject?.name || 'General ECOEMS'}
+                    </span>
+                    <span
+                      className={`rounded-md px-2 py-0.5 text-[10px] font-bold border ${
+                        isReviewed
+                          ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+                          : isSubmitted
+                          ? 'border-amber-400/30 bg-amber-400/10 text-amber-300'
+                          : 'border-slate-700 bg-slate-800/60 text-slate-400'
+                      }`}
+                    >
+                      {isReviewed
+                        ? `✓ Calificada (${task.review?.grade}/10)`
+                        : isSubmitted
+                        ? 'Entregada • Esperando revisión'
+                        : 'Por hacer'}
+                    </span>
                   </div>
 
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {task.type === 'reto' && (
-                      <span className="chip border-amber-400/30 bg-amber-400/10 text-amber-300 text-[11px] font-bold">
-                        <Trophy size={11} /> Reto (+{task.points} pts)
-                      </span>
-                    )}
-                    {isReviewed && (
-                      <span className="chip border-mint-400/30 bg-mint-400/15 text-mint-400 text-[11px]">
-                        Revisada ({task.review?.grade}/10)
-                      </span>
-                    )}
-                    {isSubmitted && (
-                      <span className="chip border-iris-400/30 bg-iris-500/15 text-iris-300 text-[11px]">
-                        Entregada
-                      </span>
-                    )}
-                    {isPending && (
-                      <span className="chip border-white/10 bg-white/5 text-ink-300 text-[11px]">
-                        Pendiente
-                      </span>
-                    )}
-                  </div>
+                  <h2 className="text-base font-bold text-white leading-snug">{task.title}</h2>
+                  <p className="text-xs text-slate-300 leading-relaxed">{task.description}</p>
                 </div>
 
-                <p className="mt-3 text-xs md:text-sm text-ink-200 leading-relaxed">
-                  {task.description}
-                </p>
-
-                {/* Evidencia registrada */}
-                {task.evidence && (
-                  <div className="mt-3 rounded-2xl border border-white/5 bg-ink-950/40 p-3 space-y-1 text-xs">
-                    <p className="font-semibold text-iris-300 flex items-center gap-1">
-                      <FileEdit size={12} /> Evidencia entregada:
-                    </p>
-                    <p className="text-ink-200 italic">“{task.evidence.notes}”</p>
-                    {task.evidence.link && (
-                      <a
-                        href={task.evidence.link}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-mint-400 hover:underline pt-1"
-                      >
-                        <ExternalLink size={11} /> Ver enlace adjunto
-                      </a>
-                    )}
-                  </div>
-                )}
-
-                {/* Calificación / Retroalimentación del Tutor */}
-                {task.review && (
-                  <div className="mt-3 rounded-2xl border border-mint-400/20 bg-mint-400/5 p-3 space-y-1 text-xs">
-                    <p className="font-bold text-mint-400 flex items-center gap-1">
-                      <Award size={13} /> Calificación: {task.review.grade} / 10
-                    </p>
-                    {task.review.feedback && (
-                      <p className="text-ink-200">
-                        <strong>Comentarios de {state.profile.tutor}:</strong> {task.review.feedback}
-                      </p>
-                    )}
-                  </div>
+                {/* Botón para borrar tarea (solo Brian/Tutor) */}
+                {isTutor && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm('¿Seguro que deseas eliminar esta tarea?')) {
+                        actions.deleteTask(task.id)
+                        toast({ tone: 'info', title: 'Tarea eliminada' })
+                      }
+                    }}
+                    className="text-slate-500 hover:text-rose-400 transition p-1 cursor-pointer"
+                    title="Eliminar tarea"
+                  >
+                    <Trash2 size={15} />
+                  </button>
                 )}
               </div>
 
-              {/* Pie con fecha límite y botones de acción */}
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-white/5 text-xs">
-                <span
-                  className={`flex items-center gap-1 font-semibold ${
-                    days < 0
-                      ? 'text-rose-400'
-                      : days <= 1
-                      ? 'text-amber-400'
-                      : 'text-ink-300'
-                  }`}
-                >
-                  <CalendarDays size={13} />
-                  {days < 0
-                    ? `Venció hace ${-days} d`
+              {/* Evidencia entregada por Ingrid (notas + foto de libreta) */}
+              {task.evidence && (
+                <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3.5 space-y-2 text-xs">
+                  <p className="font-bold text-emerald-400 flex items-center gap-1.5">
+                    <CheckCircle2 size={14} /> Evidencia entregada por Ingrid:
+                  </p>
+
+                  {task.evidence.notes && (
+                    <p className="text-slate-300 italic bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/80">
+                      “{task.evidence.notes}”
+                    </p>
+                  )}
+
+                  {task.evidence.photo && (
+                    <div className="flex items-center gap-3 pt-1">
+                      <img
+                        src={task.evidence.photo}
+                        alt="Miniatura libreta"
+                        className="h-14 w-14 rounded-lg object-cover border border-slate-700 shadow cursor-pointer hover:opacity-90 transition"
+                        onClick={() => setPreviewPhoto(task.evidence.photo)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setPreviewPhoto(task.evidence.photo)}
+                        className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 hover:underline cursor-pointer"
+                      >
+                        <ImageIcon size={14} /> Ver foto de libreta en grande 🔍
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Comentarios y calificación de Brian */}
+              {task.review && (
+                <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3.5 space-y-1 text-xs">
+                  <div className="flex items-center justify-between">
+                    <p className="font-bold text-emerald-300">Calificación de Brian:</p>
+                    <span className="rounded-lg bg-emerald-500/20 px-2 py-0.5 font-black text-emerald-300 text-sm">
+                      {task.review.grade} / 10
+                    </span>
+                  </div>
+                  {task.review.feedback && (
+                    <p className="text-slate-300 mt-1">
+                      <strong className="text-white">Mensaje para ti:</strong> {task.review.feedback}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Pie de tarea con acciones */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-800/80 text-xs">
+                <span className={`font-semibold ${days <= 1 && isPending ? 'text-amber-400' : 'text-slate-400'}`}>
+                  {isReviewed
+                    ? 'Completada y revisada'
+                    : days < 0
+                    ? `Venció hace ${-days} días`
                     : days === 0
-                    ? 'Vence hoy'
-                    : `Vence ${formatDate(task.dueDate)}`}
+                    ? '¡Vence hoy!'
+                    : `Entrega antes del ${formatDate(task.dueDate)}`}
                 </span>
 
                 <div className="flex items-center gap-2">
-                  {isTutor ? (
+                  {/* Acciones para Brian (Tutor) */}
+                  {isTutor && (
                     <>
                       {isSubmitted && (
                         <button
                           type="button"
                           onClick={() => handleOpenReview(task)}
-                          className="btn btn-mint px-3 py-1 text-xs"
+                          className="flex items-center gap-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3.5 py-2 transition cursor-pointer text-xs"
                         >
-                          Calificar
+                          <Star size={14} fill="currentColor" /> Revisar y calificar
                         </button>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (window.confirm('¿Eliminar esta tarea?')) {
-                            actions.deleteTask(task.id)
-                          }
-                        }}
-                        className="btn btn-ghost px-2 py-1 text-rose-300 hover:bg-rose-500/20"
-                        title="Eliminar tarea"
-                      >
-                        <Trash2 size={13} />
-                      </button>
+                      {isReviewed && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenReview(task)}
+                          className="flex items-center gap-1 rounded-xl border border-slate-700 bg-slate-800 px-3 py-1.5 text-slate-300 hover:text-white transition cursor-pointer text-xs"
+                        >
+                          Modificar calificación
+                        </button>
+                      )}
                     </>
-                  ) : (
+                  )}
+
+                  {/* Acciones para Ingrid (Estudiante) */}
+                  {!isTutor && (
                     <button
                       type="button"
                       onClick={() => handleOpenSubmit(task)}
-                      className={`btn text-xs px-3 py-1.5 font-bold ${
+                      className={`flex items-center gap-1.5 rounded-xl px-4 py-2 font-bold transition cursor-pointer ${
                         isReviewed
-                          ? 'btn-ghost'
+                          ? 'border border-slate-700 bg-slate-800 text-slate-300'
                           : isSubmitted
-                          ? 'btn-ghost border-iris-400/30 text-iris-300'
-                          : 'btn-primary'
+                          ? 'border border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
+                          : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/20'
                       }`}
                     >
-                      <UploadCloud size={14} />
-                      {isReviewed ? 'Ver evidencia' : isSubmitted ? 'Editar entrega' : 'Entregar evidencia'}
+                      <Camera size={14} />
+                      {isReviewed ? 'Ver mi libreta' : isSubmitted ? 'Editar foto de libreta' : '📸 Entregar foto de libreta'}
                     </button>
                   )}
                 </div>
@@ -346,142 +433,201 @@ export default function Tasks() {
         })}
 
         {filteredTasks.length === 0 && (
-          <div className="card p-12 text-center sm:col-span-2">
-            <Trophy size={36} className="mx-auto text-mint-400 opacity-60 mb-2" />
-            <p className="font-bold text-white">No hay tareas o retos en esta categoría.</p>
-            <p className="text-xs text-ink-300 mt-1">¡Buen trabajo al día con tus actividades!</p>
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center space-y-2">
+            <p className="font-bold text-white text-base">No hay tareas en esta sección.</p>
+            <p className="text-xs text-slate-400">
+              {isTutor
+                ? 'Puedes asignarle una tarea prediseñada a Ingrid usando el botón de arriba.'
+                : '¡Vas al día con tus actividades! Buen trabajo.'}
+            </p>
           </div>
         )}
       </div>
 
-      {/* ──────────────── MODAL DE ENTREGA (ESTUDIANTE) ──────────────── */}
+      {/* ───────────────── MODAL: INGRID SUBE FOTO DE LIBRETA ───────────────── */}
       <Modal
-        open={isSubmitModalOpen}
-        onClose={() => setIsSubmitModalOpen(false)}
-        title="Entregar evidencia de tarea"
-        subtitle={activeTask?.title}
+        open={Boolean(submitTask)}
+        onClose={() => setSubmitTask(null)}
+        title="Entregar foto de libreta"
+        subtitle={submitTask?.title}
         footer={
           <>
             <button
               type="button"
-              className="btn btn-ghost"
-              onClick={() => setIsSubmitModalOpen(false)}
+              className="rounded-xl border border-slate-700 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 cursor-pointer"
+              onClick={() => setSubmitTask(null)}
             >
               Cancelar
             </button>
             <button
               type="button"
-              className="btn btn-mint font-bold"
+              className="flex items-center gap-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-4 py-2 text-xs font-bold text-slate-950 cursor-pointer shadow-md shadow-emerald-500/20"
               onClick={handleSaveSubmit}
             >
-              <Send size={15} /> Confirmar entrega
+              <Send size={14} /> Enviar libreta a Brian
             </button>
           </>
         }
       >
-        <div className="space-y-4">
-          <div>
-            <label className="label">Notas de tu entrega / procedimiento</label>
+        <div className="space-y-4 text-xs sm:text-sm">
+          {/* Subir foto desde cámara de celular o PC */}
+          <div className="space-y-2">
+            <label className="font-semibold text-white block">
+              Foto de tu libreta con los ejercicios resueltos:
+            </label>
+            <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-700 bg-slate-950/60 p-4 hover:border-emerald-500/50 transition">
+              {evidencePhoto ? (
+                <div className="space-y-3 w-full text-center">
+                  <img
+                    src={evidencePhoto}
+                    alt="Foto de libreta"
+                    className="max-h-52 rounded-xl mx-auto object-cover border border-slate-700 shadow-md cursor-pointer"
+                    onClick={() => setPreviewPhoto(evidencePhoto)}
+                  />
+                  <div className="flex justify-center gap-2">
+                    <label className="rounded-xl border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700 transition cursor-pointer">
+                      Tomar otra foto
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        className="hidden"
+                        onChange={handlePhotoUpload}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setEvidencePhoto(null)}
+                      className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-300 hover:bg-rose-500/20 cursor-pointer"
+                    >
+                      Quitar foto
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center gap-2 cursor-pointer py-5 w-full text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <Camera size={24} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-white text-xs sm:text-sm">
+                      Toma una foto de tu cuaderno o elígela de tu galería
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      (PNG o JPG, máximo 5MB)
+                    </p>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={handlePhotoUpload}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+
+          {/* Notas de dudas o comentarios */}
+          <div className="space-y-1.5">
+            <label className="font-semibold text-white block">
+              Comentarios o dudas que tuviste (opcional):
+            </label>
             <textarea
-              className="input leading-relaxed"
-              rows={4}
-              placeholder="Explica cómo resolviste los problemas o los hallazgos principales..."
+              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+              rows={3}
+              placeholder="Ej. Terminé los 15 ejercicios. El 4 me costó un poco de trabajo..."
               value={evidenceNotes}
               onChange={(e) => setEvidenceNotes(e.target.value)}
             />
           </div>
-
-          <div>
-            <label className="label">Enlace a fotos / documento de Drive (opcional)</label>
-            <input
-              type="url"
-              className="input"
-              placeholder="https://drive.google.com/..."
-              value={evidenceLink}
-              onChange={(e) => setEvidenceLink(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="label">Autoevaluación: ¿Qué tan segura te sentiste? (1 a 5 estrellas)</label>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => setSelfRating(star)}
-                  className={`p-2 rounded-xl transition ${
-                    star <= selfRating ? 'text-amber-400 bg-amber-400/10' : 'text-ink-400 bg-white/5'
-                  }`}
-                >
-                  <Star size={20} fill={star <= selfRating ? 'currentColor' : 'none'} />
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </Modal>
 
-      {/* ──────────────── MODAL DE REVISIÓN (TUTOR) ──────────────── */}
+      {/* ───────────────── MODAL: BRIAN CALIFICA Y REVISA LIBRETA ───────────────── */}
       <Modal
-        open={isReviewModalOpen}
-        onClose={() => setIsReviewModalOpen(false)}
-        title="Calificar y retroalimentar"
-        subtitle={activeTask?.title}
+        open={Boolean(reviewTask)}
+        onClose={() => setReviewTask(null)}
+        title="Revisión de Libreta"
+        subtitle={reviewTask?.title}
         footer={
           <>
             <button
               type="button"
-              className="btn btn-ghost"
-              onClick={() => setIsReviewModalOpen(false)}
+              className="rounded-xl border border-slate-700 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 cursor-pointer"
+              onClick={() => setReviewTask(null)}
             >
               Cancelar
             </button>
             <button
               type="button"
-              className="btn btn-mint font-bold"
+              className="rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-xs font-bold text-white cursor-pointer shadow-md shadow-indigo-600/20"
               onClick={handleSaveReview}
             >
-              Guardar calificación
+              Guardar Calificación
             </button>
           </>
         }
       >
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-white/5 bg-ink-950/50 p-4 space-y-2 text-xs">
-            <p className="font-bold text-iris-300">Evidencia de {state.profile.student}:</p>
-            <p className="text-white italic">“{activeTask?.evidence?.notes}”</p>
-            {activeTask?.evidence?.link && (
-              <a
-                href={activeTask.evidence.link}
-                target="_blank"
-                rel="noreferrer"
-                className="text-mint-400 flex items-center gap-1 hover:underline pt-1"
-              >
-                <ExternalLink size={12} /> Abrir enlace adjunto
-              </a>
-            )}
-          </div>
+        <div className="space-y-4 text-xs sm:text-sm">
+          {/* Muestra foto de libreta si existe */}
+          {reviewTask?.evidence?.photo && (
+            <div className="space-y-1.5">
+              <label className="font-semibold text-slate-300 block">Foto de la libreta enviada por Ingrid:</label>
+              <div className="text-center rounded-xl bg-slate-950 p-2 border border-slate-800">
+                <img
+                  src={reviewTask.evidence.photo}
+                  alt="Libreta de Ingrid"
+                  className="max-h-60 mx-auto rounded-lg object-contain cursor-pointer hover:opacity-90 transition"
+                  onClick={() => setPreviewPhoto(reviewTask.evidence.photo)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setPreviewPhoto(reviewTask.evidence.photo)}
+                  className="text-xs text-indigo-400 font-bold hover:underline mt-2 inline-block cursor-pointer"
+                >
+                  Ver en pantalla completa 🔍
+                </button>
+              </div>
+            </div>
+          )}
 
-          <div>
-            <label className="label">Calificación (0 a 10)</label>
+          {reviewTask?.evidence?.notes && (
+            <div className="rounded-xl bg-slate-950 p-3 border border-slate-800 space-y-1">
+              <p className="text-[11px] font-bold text-slate-400 uppercase">Nota de Ingrid:</p>
+              <p className="text-slate-200 italic">“{reviewTask.evidence.notes}”</p>
+            </div>
+          )}
+
+          {/* Calificación de 1 a 10 */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="font-semibold text-white">Calificación:</label>
+              <span className="rounded-lg bg-indigo-500/20 px-2.5 py-1 text-sm font-black text-indigo-300 border border-indigo-500/30">
+                {reviewGrade} / 10
+              </span>
+            </div>
             <input
-              type="number"
-              min={0}
-              max={10}
-              step={0.5}
-              className="input w-32"
+              type="range"
+              min="5"
+              max="10"
+              step="1"
               value={reviewGrade}
               onChange={(e) => setReviewGrade(e.target.value)}
+              className="w-full accent-indigo-500 cursor-pointer"
             />
           </div>
 
-          <div>
-            <label className="label">Consejos / Retroalimentación para {state.profile.student}</label>
+          {/* Comentarios de retroalimentación */}
+          <div className="space-y-1.5">
+            <label className="font-semibold text-white block">
+              Mensaje o consejos de mejora para Ingrid:
+            </label>
             <textarea
-              className="input"
+              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
               rows={3}
-              placeholder="Ej. ¡Excelente esfuerzo! Ojo con la ley de signos en el ejercicio 3..."
+              placeholder="Ej. ¡Excelente letra y orden! Recuerda cuidar los signos en el ejercicio 3."
               value={reviewFeedback}
               onChange={(e) => setReviewFeedback(e.target.value)}
             />
@@ -489,111 +635,130 @@ export default function Tasks() {
         </div>
       </Modal>
 
-      {/* ──────────────── MODAL DE CREACIÓN DE TAREA (TUTOR) ──────────────── */}
+      {/* ───────────────── MODAL: CATÁLOGO DE TAREAS ECOEMS (BRIAN) ───────────────── */}
       <Modal
-        open={isNewTaskModalOpen}
-        onClose={() => setIsNewTaskModalOpen(false)}
-        title="Asignar nueva tarea o reto"
-        footer={
-          <>
-            <button
-              type="button"
-              className="btn btn-ghost"
-              onClick={() => setIsNewTaskModalOpen(false)}
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              className="btn btn-mint font-bold"
-              onClick={handleCreateTask}
-            >
-              Asignar actividad
-            </button>
-          </>
-        }
+        open={isCatalogOpen}
+        onClose={() => {
+          setIsCatalogOpen(false)
+          setSelectedCatalogTask(null)
+        }}
+        title="Catálogo de Tareas ECOEMS / COMIPEMS"
+        subtitle="Selecciona una tarea ya preparada para asignarla a Ingrid en 1 clic"
       >
         <div className="space-y-4">
-          <div>
-            <label className="label">Título de la actividad</label>
-            <input
-              type="text"
-              className="input"
-              placeholder="Ej. 10 problemas de despeje de fórmulas"
-              value={newTaskTitle}
-              onChange={(e) => setNewTaskTitle(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="label">Instrucciones detalladas</label>
-            <textarea
-              className="input"
-              rows={3}
-              placeholder="Detalla qué debe hacer, en qué cuaderno o qué páginas..."
-              value={newTaskDesc}
-              onChange={(e) => setNewTaskDesc(e.target.value)}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="label">Materia</label>
-              <select
-                className="input"
-                value={newTaskSubject}
-                onChange={(e) => setNewTaskSubject(e.target.value)}
+          {/* Selector de materias para filtrar el catálogo */}
+          <div className="no-scrollbar flex gap-1.5 overflow-x-auto pb-1 text-xs">
+            <button
+              type="button"
+              onClick={() => setCatalogSubjectFilter('todas')}
+              className={`rounded-lg px-3 py-1.5 font-bold transition cursor-pointer shrink-0 ${
+                catalogSubjectFilter === 'todas'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+              }`}
+            >
+              Todas
+            </button>
+            {SUBJECTS.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => setCatalogSubjectFilter(s.id)}
+                className={`rounded-lg px-3 py-1.5 font-bold transition cursor-pointer shrink-0 ${
+                  catalogSubjectFilter === s.id
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                }`}
               >
-                <option value="general">General / Mixto</option>
-                {SUBJECTS.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+                {s.name}
+              </button>
+            ))}
+          </div>
 
-            <div>
-              <label className="label">Tipo de actividad</label>
-              <select
-                className="input"
-                value={newTaskType}
-                onChange={(e) => setNewTaskType(e.target.value)}
+          {/* Lista de tareas prediseñadas */}
+          <div className="max-h-96 overflow-y-auto space-y-2.5 pr-1">
+            {filteredCatalog.map((task) => {
+              const subject = SUBJECT_MAP[task.subjectId]
+              const isSelected = selectedCatalogTask?.id === task.id
+
+              return (
+                <div
+                  key={task.id}
+                  onClick={() => {
+                    setSelectedCatalogTask(task)
+                    setCustomDays(task.days || 3)
+                    setCustomPoints(task.points || 25)
+                  }}
+                  className={`rounded-xl p-3.5 border transition cursor-pointer ${
+                    isSelected
+                      ? 'border-indigo-500 bg-indigo-500/15'
+                      : 'border-slate-800 bg-slate-950 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-bold" style={{ color: subject?.color || '#38bdf8' }}>
+                      {subject?.name} • {task.ecoemsKey}
+                    </span>
+                    <span className="text-[10px] rounded bg-slate-800 px-1.5 py-0.5 text-slate-300 font-semibold">
+                      +{task.points} pts
+                    </span>
+                  </div>
+
+                  <h3 className="text-xs sm:text-sm font-bold text-white mt-1">{task.title}</h3>
+                  <p className="text-[11px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                    {task.description}
+                  </p>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Panel de confirmación y ajuste de días */}
+          {selectedCatalogTask && (
+            <div className="rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-3.5 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-white">Tarea seleccionada:</p>
+                  <p className="text-xs text-indigo-300 font-medium">{selectedCatalogTask.title}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-[11px] text-slate-300">Días:</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="14"
+                    value={customDays}
+                    onChange={(e) => setCustomDays(e.target.value)}
+                    className="w-14 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-center text-xs font-bold text-white"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleAssignCatalogTask}
+                className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 py-2.5 text-xs font-bold text-white shadow-md shadow-indigo-600/30 transition cursor-pointer"
               >
-                <option value="tarea">Tarea normal</option>
-                <option value="reto">Reto especial (+ puntos)</option>
-              </select>
+                ✓ Asignar esta tarea a Ingrid ahora
+              </button>
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="label">Días para entregar</label>
-              <input
-                type="number"
-                min={1}
-                max={30}
-                className="input"
-                value={newTaskDays}
-                onChange={(e) => setNewTaskDays(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="label">Puntos otorgados</label>
-              <input
-                type="number"
-                min={5}
-                max={100}
-                step={5}
-                className="input"
-                value={newTaskPoints}
-                onChange={(e) => setNewTaskPoints(e.target.value)}
-              />
-            </div>
-          </div>
+          )}
         </div>
       </Modal>
+
+      {/* ───────────────── VISOR DE FOTO EN PANTALLA COMPLETA ───────────────── */}
+      {previewPhoto && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4 backdrop-blur-sm cursor-zoom-out"
+          onClick={() => setPreviewPhoto(null)}
+        >
+          <img
+            src={previewPhoto}
+            alt="Foto ampliada de libreta"
+            className="max-h-[92vh] max-w-[95vw] rounded-2xl object-contain shadow-2xl"
+          />
+        </div>
+      )}
     </div>
   )
 }

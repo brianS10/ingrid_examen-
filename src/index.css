@@ -1,6 +1,6 @@
 /* ==========================================================================
    Misión Prepa · Sistema de diseño
-   Tailwind CSS v4 (configuración CSS-first mediante @theme)
+   Paleta refinada, moderna y educativa (Slate/Navy suave, sin neones de IA)
    ========================================================================== */
 @import "tailwindcss";
 @import "katex/dist/katex.min.css";
@@ -10,56 +10,31 @@
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Outfit", "Plus Jakarta Sans", ui-sans-serif, sans-serif;
 
-  /* Azul profundo (fondos y superficies) */
-  --color-ink-950: #060a1a;
-  --color-ink-900: #0a1027;
-  --color-ink-850: #0e1633;
-  --color-ink-800: #131c40;
-  --color-ink-700: #1c2756;
-  --color-ink-600: #2a3772;
-  --color-ink-500: #3c4b8f;
-  --color-ink-300: #8d9acb;
-  --color-ink-200: #b9c2e6;
-  --color-ink-100: #dfe4f7;
+  /* Fondo refinado pizarra / navy sobrio (estilo Notion/Linear/Apple) */
+  --color-ink-950: #0a0f1d;
+  --color-ink-900: #10172a;
+  --color-ink-850: #172036;
+  --color-ink-800: #1e2942;
+  --color-ink-700: #293656;
+  --color-ink-600: #38466e;
+  --color-ink-500: #4f5f8b;
+  --color-ink-300: #94a3b8;
+  --color-ink-200: #cbd5e1;
+  --color-ink-100: #f1f5f9;
 
-  /* Acentos */
-  --color-mint-300: #9ff7d8;
-  --color-mint-400: #6ef0c3;
-  --color-mint-500: #34d9a5;
-  --color-mint-600: #16b386;
-  --color-iris-300: #c4b5fd;
-  --color-iris-400: #a78bfa;
-  --color-iris-500: #8b5cf6;
-  --color-iris-600: #7c3aed;
-  --color-sky-glow: #5ab4ff;
+  /* Colores naturales de acento educativo */
+  --color-mint-300: #6ee7b7;
+  --color-mint-400: #34d399;
+  --color-mint-500: #10b981;
+  --color-mint-600: #059669;
 
-  /* Animaciones */
-  --animate-fade-up: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
-  --animate-pop: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  --animate-float: float 6s ease-in-out infinite;
-  --animate-shimmer: shimmer 2.4s linear infinite;
-  --animate-slide-in: slide-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --color-iris-300: #a5b4fc;
+  --color-iris-400: #818cf8;
+  --color-iris-500: #6366f1;
+  --color-iris-600: #4f46e5;
 
-  @keyframes fade-up {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes pop {
-    0% { opacity: 0; transform: scale(0.85); }
-    100% { opacity: 1; transform: scale(1); }
-  }
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
-  }
-  @keyframes shimmer {
-    from { background-position: -200% 0; }
-    to { background-position: 200% 0; }
-  }
-  @keyframes slide-in {
-    from { opacity: 0; transform: translateX(100%); }
-    to { opacity: 1; transform: translateX(0); }
-  }
+  --color-sky-glow: #38bdf8;
+  --color-amber-eco: #f59e0b;
 }
 
 /* Base ------------------------------------------------------------------- */
@@ -71,25 +46,24 @@
   body {
     @apply bg-ink-950 font-sans text-ink-100 antialiased;
     min-height: 100dvh;
+    background-color: #090d19;
+    /* Fondo limpio sin degradados exagerados de IA */
     background-image:
-      radial-gradient(60rem 40rem at 110% -10%, rgb(139 92 246 / 0.18), transparent 60%),
-      radial-gradient(50rem 35rem at -10% 110%, rgb(52 217 165 / 0.12), transparent 60%),
-      radial-gradient(40rem 30rem at 50% 40%, rgb(90 180 255 / 0.06), transparent 70%);
+      radial-gradient(40rem 30rem at 95% -10%, rgb(99 102 241 / 0.08), transparent 70%),
+      radial-gradient(35rem 25rem at 5% 100%, rgb(16 185 129 / 0.06), transparent 70%);
     background-attachment: fixed;
   }
   h1, h2, h3, h4 {
     @apply font-display tracking-tight text-white;
   }
   ::selection {
-    background: rgb(139 92 246 / 0.45);
+    background: rgb(99 102 241 / 0.35);
   }
   /* Scrollbar discreta */
-  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-thumb {
-    background: rgb(60 75 143 / 0.6);
+    background: rgb(56 70 110 / 0.5);
     border-radius: 999px;
-    border: 3px solid transparent;
-    background-clip: padding-box;
   }
   ::-webkit-scrollbar-track { background: transparent; }
 
@@ -101,85 +75,71 @@
 
 /* Componentes reutilizables --------------------------------------------- */
 @layer components {
-  /* Tarjeta tipo vidrio */
+  /* Tarjeta elegante, suave y limpia */
   .card {
-    @apply rounded-3xl border border-white/8 bg-ink-850/70 p-5 shadow-xl shadow-black/20 backdrop-blur-xl;
+    @apply rounded-2xl border border-white/6 bg-ink-900/90 p-5 shadow-lg shadow-black/20 backdrop-blur-md;
   }
   .card-hover {
-    @apply transition duration-300 hover:-translate-y-0.5 hover:border-white/15 hover:shadow-2xl hover:shadow-iris-600/10;
+    @apply transition duration-200 hover:border-white/15 hover:bg-ink-850/80;
   }
 
-  /* Botones: usar siempre "btn" + variante, p. ej. className="btn btn-primary" */
+  /* Botones modernos y accesibles */
   .btn {
-    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition duration-200 select-none active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold transition select-none active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply bg-linear-to-r from-iris-500 to-sky-glow text-white shadow-lg shadow-iris-600/30 hover:brightness-110;
+    @apply bg-iris-600 text-white shadow-md shadow-iris-600/25 hover:bg-iris-500;
   }
   .btn-mint {
-    @apply bg-mint-400 text-ink-950 shadow-lg shadow-mint-500/25 hover:bg-mint-300;
+    @apply bg-mint-500 text-ink-950 shadow-md shadow-mint-500/20 hover:bg-mint-400;
   }
   .btn-ghost {
-    @apply border border-white/10 bg-white/5 text-ink-100 hover:border-white/20 hover:bg-white/10;
+    @apply border border-white/8 bg-white/4 text-ink-200 hover:border-white/15 hover:bg-white/8 hover:text-white;
   }
   .btn-danger {
-    @apply border border-rose-400/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20;
+    @apply border border-rose-500/20 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20;
   }
 
-  /* Formularios */
+  /* Formularios limpios */
   .input {
-    @apply w-full rounded-2xl border border-white/10 bg-ink-900/80 px-4 py-2.5 text-sm text-white placeholder:text-ink-300/70 transition outline-none focus:border-iris-400 focus:ring-4 focus:ring-iris-500/20;
+    @apply w-full rounded-xl border border-white/8 bg-ink-950/80 px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder:text-ink-500 transition outline-none focus:border-iris-400 focus:ring-2 focus:ring-iris-500/20;
   }
   .label {
-    @apply mb-1.5 block text-xs font-semibold tracking-wide text-ink-300 uppercase;
+    @apply mb-1.5 block text-xs font-bold tracking-wider text-ink-300 uppercase;
   }
 
   /* Chips */
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold;
+    @apply inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold;
   }
 
   /* Título de sección */
   .section-title {
-    @apply font-display text-lg font-bold text-white;
+    @apply font-display text-base sm:text-lg font-bold text-white;
   }
 
-  /* Texto con degradado */
+  /* Texto sutil con estilo */
   .text-gradient {
-    @apply bg-linear-to-r from-mint-300 via-sky-glow to-iris-400 bg-clip-text text-transparent;
+    @apply text-white;
   }
 }
 
 /* Contenido enriquecido (apuntes) -------------------------------------- */
 .rich {
-  @apply space-y-3 text-[0.95rem] leading-relaxed text-ink-100;
+  @apply space-y-3 text-[0.92rem] leading-relaxed text-ink-100;
 }
-.rich h3 { @apply mt-4 text-base font-bold text-white; }
-.rich h4 { @apply mt-3 text-sm font-bold text-mint-300 uppercase tracking-wide; }
+.rich h3 { @apply mt-3 text-base font-bold text-white; }
+.rich h4 { @apply mt-2 text-xs font-bold text-mint-400 uppercase tracking-wider; }
 .rich ul { @apply list-disc space-y-1 pl-5 marker:text-iris-400; }
 .rich ol { @apply list-decimal space-y-1 pl-5 marker:text-mint-400 marker:font-bold; }
 .rich strong { @apply font-bold text-white; }
 .rich em { @apply text-iris-300; }
-.rich code { @apply rounded-md bg-white/10 px-1.5 py-0.5 font-mono text-[0.85em] text-mint-300; }
-.rich blockquote { @apply rounded-r-2xl border-l-4 border-mint-400 bg-mint-400/5 px-4 py-2 text-ink-100; }
+.rich code { @apply rounded-md bg-white/8 px-1.5 py-0.5 font-mono text-[0.85em] text-mint-300; }
+.rich blockquote { @apply rounded-r-xl border-l-3 border-mint-400 bg-mint-500/5 px-3.5 py-2 text-ink-100; }
 .rich .math-block {
-  @apply overflow-x-auto rounded-2xl border border-iris-400/20 bg-iris-500/8 px-4 py-3 text-center text-white;
+  @apply overflow-x-auto rounded-xl border border-iris-500/20 bg-iris-500/5 px-4 py-3 text-center text-white;
 }
-.rich .katex { font-size: 1.08em; }
+.rich .katex { font-size: 1.05em; }
 
-/* Utilidades extra ------------------------------------------------------ */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
-
-.shimmer-bar {
-  background-image: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.35), transparent);
-  background-size: 200% 100%;
-  @apply animate-shimmer;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
-}
