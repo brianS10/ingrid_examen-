@@ -118,8 +118,11 @@ function Sidebar() {
       </button>
 
       {/* Perfil activo y Cerrar Sesión */}
-      <div className="rounded-2xl border border-white/8 bg-ink-950/60 p-3">
-        <div className="flex items-center justify-between">
+      <div className="rounded-2xl border border-white/8 bg-ink-950/70 p-3.5 space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-iris-500/20 text-iris-300 font-bold font-display text-sm">
+            {(state.currentUser?.name || (state.role === 'tutor' ? state.profile.tutor : state.profile.student))[0]}
+          </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-bold text-white">
               {state.currentUser?.name || (state.role === 'tutor' ? state.profile.tutor : state.profile.student)}
@@ -128,18 +131,20 @@ function Sidebar() {
               Rol: {state.role}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              actions.logout()
-              toast({ tone: 'info', title: 'Sesión cerrada' })
-            }}
-            className="btn btn-ghost h-8 w-8 rounded-xl p-0 text-ink-300 hover:text-rose-400 hover:bg-rose-500/10"
-            title="Cerrar sesión"
-          >
-            <LogOut size={15} />
-          </button>
         </div>
+
+        <button
+          type="button"
+          id="sidebar-logout"
+          onClick={() => {
+            actions.logout()
+            window.location.hash = '#/inicio'
+            toast({ tone: 'info', title: 'Sesión cerrada exitosamente' })
+          }}
+          className="btn btn-ghost w-full py-2 text-xs font-semibold text-rose-300 border-rose-500/20 hover:bg-rose-500/15 gap-1.5"
+        >
+          <LogOut size={14} /> Cerrar Sesión
+        </button>
       </div>
     </aside>
   )
@@ -172,18 +177,20 @@ function Header() {
             id="header-logout"
             onClick={() => {
               actions.logout()
-              toast({ tone: 'info', title: 'Sesión cerrada' })
+              window.location.hash = '#/inicio'
+              toast({ tone: 'info', title: 'Sesión cerrada exitosamente' })
             }}
-            className="btn btn-ghost h-9 w-9 rounded-xl p-0 text-ink-300 hover:text-rose-400 hover:bg-rose-500/10 lg:hidden"
+            className="btn btn-ghost h-9 px-3 rounded-xl text-xs font-semibold text-rose-300 border border-rose-500/20 hover:bg-rose-500/15 gap-1.5"
             title="Cerrar sesión"
           >
-            <LogOut size={16} />
+            <LogOut size={15} />
+            <span className="hidden sm:inline">Salir</span>
           </button>
           <button
             type="button"
             id="header-settings"
             onClick={() => navigate('ajustes')}
-            className="btn btn-ghost h-9 w-9 rounded-xl p-0 lg:hidden"
+            className="btn btn-ghost h-9 w-9 rounded-xl p-0"
             aria-label="Ajustes"
           >
             <Settings size={17} />
