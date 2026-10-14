@@ -154,7 +154,7 @@ export default function LoginPage({ onLogin }) {
           </form>
 
           {/* Accesos rápidos preconfigurados para comodidad */}
-          <div className="mt-6 pt-5 border-t border-white/6 space-y-2.5">
+          {/*<div className="mt-6 pt-5 border-t border-white/6 space-y-2.5">
             <p className="text-[11px] font-bold text-ink-300 uppercase tracking-wider text-center">
               Seleccionar perfil rápido
             </p>
@@ -187,7 +187,7 @@ export default function LoginPage({ onLogin }) {
                 </div>
               </button>
             </div>
-          </div>
+          </div>*/}
         </div>
 
         {/* Mensaje de pie */}
