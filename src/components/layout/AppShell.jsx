@@ -1,150 +1,124 @@
 /**
- * Estructura principal: barra lateral (desktop), encabezado y navegación inferior (móvil).
+ * Estructura de navegación simplificada, amigable y limpia.
+ * Menú claro:
+ *  1. 🏠 Mi Día (Inicio)
+ *  2. 📚 Materias (Temario fácil)
+ *  3. ⚡ Practicar (Quizzes rápidos y simulacros)
+ *  4. 📝 Tareas (Retos con Brian)
+ *  5. 🏆 Progreso (Medallas y estadísticas)
  */
 import {
-  BarChart3, ClipboardList, Flame, GraduationCap, House, LogOut, Route, Rocket, Settings, Timer, UserRound,
+  Award, BookOpen, CheckSquare, Flame, GraduationCap, Home,
+  LogOut, Rocket, Settings, Sparkles, UserCheck, Zap
 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
-import { daysUntil, greeting } from '../../lib/date'
+import { daysUntil } from '../../lib/date'
 
 export const NAV_ITEMS = [
-  { id: 'inicio', label: 'Inicio', icon: House },
-  { id: 'ruta', label: 'Ruta', longLabel: 'Ruta de aprendizaje', icon: Route },
-  { id: 'simulador', label: 'Simulador', icon: Timer },
-  { id: 'tareas', label: 'Tareas', longLabel: 'Tareas y retos', icon: ClipboardList },
-  { id: 'estadisticas', label: 'Progreso', longLabel: 'Estadísticas', icon: BarChart3 },
+  { id: 'inicio', label: 'Mi Día', icon: Home },
+  { id: 'ruta', label: 'Materias', icon: BookOpen },
+  { id: 'simulador', label: 'Practicar', icon: Zap },
+  { id: 'tareas', label: 'Tareas', icon: CheckSquare },
+  { id: 'estadisticas', label: 'Progreso', icon: Award },
 ]
 
 export function Logo({ compact = false }) {
   return (
-    <div className="flex items-center gap-3">
-      <span className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-iris-500 via-sky-glow to-mint-400 shadow-lg shadow-iris-600/40">
+    <div className="flex items-center gap-2.5">
+      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-tr from-iris-500 via-sky-400 to-mint-400 shadow-lg shadow-iris-600/30">
         <Rocket size={20} className="text-white" strokeWidth={2.4} />
-      </span>
+      </div>
       {!compact && (
-        <div className="leading-tight">
-          <p className="font-display text-lg font-extrabold text-white">Misión Prepa</p>
-          <p className="text-[11px] font-semibold tracking-wider text-ink-300 uppercase">COMIPEMS 2027</p>
+        <div>
+          <p className="font-display text-base font-extrabold text-white leading-tight">Misión Prepa</p>
+          <p className="text-[10px] font-bold tracking-wider text-mint-400 uppercase">COMIPEMS</p>
         </div>
       )}
     </div>
   )
 }
 
-/** Interruptor de rol Estudiante / Tutor */
-export function RoleSwitch({ className = '' }) {
-  const { state, actions, toast } = useApp()
-  const roles = [
-    { id: 'estudiante', label: 'Estudiante', icon: GraduationCap },
-    { id: 'tutor', label: 'Tutor', icon: UserRound },
-  ]
-  return (
-    <div className={`inline-flex rounded-2xl border border-white/10 bg-ink-950/70 p-1 ${className}`} role="radiogroup" aria-label="Vista">
-      {roles.map(({ id, label, icon: Ico }) => {
-        const active = state.role === id
-        return (
-          <button
-            key={id}
-            id={`role-${id}`}
-            type="button"
-            role="radio"
-            aria-checked={active}
-            onClick={() => {
-              if (active) return
-              actions.setRole(id)
-              toast({
-                tone: 'info',
-                title: id === 'tutor' ? 'Modo tutor activado' : 'Vista de estudiante',
-                description: id === 'tutor' ? 'Puedes editar consejos, apuntes, tareas y el tema del día.' : '¡A estudiar! 💪',
-                duration: 2500,
-              })
-            }}
-            className={`flex cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all ${
-              active
-                ? id === 'tutor'
-                  ? 'bg-iris-500 text-white shadow-lg shadow-iris-600/40'
-                  : 'bg-mint-400 text-ink-950 shadow-lg shadow-mint-500/30'
-                : 'text-ink-300 hover:text-white'
-            }`}
-          >
-            <Ico size={14} />
-            {label}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
 function Sidebar() {
-  const { route, navigate, state } = useApp()
+  const { route, navigate, state, actions, isTutor, toast } = useApp()
   const days = daysUntil(state.examDate)
-  const items = [...NAV_ITEMS, { id: 'ajustes', label: 'Ajustes', icon: Settings }]
+
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-68 flex-col border-r border-white/6 bg-ink-900/60 px-5 py-6 backdrop-blur-xl lg:flex">
-      <Logo />
-      <nav className="mt-10 flex flex-1 flex-col gap-1.5" aria-label="Navegación principal">
-        {items.map(({ id, label, longLabel, icon: Ico }) => {
-          const active = route.view === id
-          return (
-            <button
-              key={id}
-              id={`nav-${id}`}
-              type="button"
-              onClick={() => navigate(id)}
-              className={`group relative flex cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-all ${
-                active ? 'bg-white/8 text-white' : 'text-ink-300 hover:bg-white/4 hover:text-white'
-              }`}
-            >
-              {active && <span className="absolute top-1/2 left-0 h-6 w-1 -translate-y-1/2 rounded-r-full bg-mint-400 shadow-[0_0_12px] shadow-mint-400" />}
-              <Ico size={19} className={active ? 'text-mint-400' : 'transition group-hover:scale-110'} />
-              {longLabel ?? label}
-            </button>
-          )
-        })}
-      </nav>
+    <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col justify-between border-r border-white/6 bg-ink-900/80 px-4 py-6 backdrop-blur-2xl lg:flex">
+      <div>
+        <Logo />
 
-      {/* Mini contador */}
-      <button
-        type="button"
-        onClick={() => navigate('inicio')}
-        className="card mb-4 cursor-pointer overflow-hidden bg-linear-to-br from-iris-600/30 to-ink-850/80 p-4 text-left"
-      >
-        <p className="text-xs font-semibold text-iris-300">Faltan</p>
-        <p className="font-display text-3xl font-extrabold text-white">
-          {Math.max(0, days)} <span className="text-base font-bold text-ink-200">días</span>
-        </p>
-        <p className="text-xs text-ink-300">para tu examen COMIPEMS</p>
-      </button>
+        {/* Menú de navegación principal con iconos amigables */}
+        <nav className="mt-8 space-y-1.5" aria-label="Navegación principal">
+          {NAV_ITEMS.map(({ id, label, icon: Ico }) => {
+            const active = route.view === id
+            return (
+              <button
+                key={id}
+                id={`nav-${id}`}
+                type="button"
+                onClick={() => navigate(id)}
+                className={`group flex w-full cursor-pointer items-center gap-3 rounded-2xl px-3.5 py-3 text-sm font-bold transition-all ${
+                  active
+                    ? 'bg-mint-400/15 text-mint-300 shadow-md shadow-mint-500/10'
+                    : 'text-ink-200 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <span
+                  className={`flex h-8 w-8 items-center justify-center rounded-xl transition ${
+                    active ? 'bg-mint-400 text-ink-950 shadow-sm' : 'bg-white/5 text-ink-300 group-hover:text-white'
+                  }`}
+                >
+                  <Ico size={16} strokeWidth={2.4} />
+                </span>
+                <span>{label}</span>
+              </button>
+            )
+          })}
+        </nav>
+      </div>
 
-      {/* Perfil activo y Cerrar Sesión */}
-      <div className="rounded-2xl border border-white/8 bg-ink-950/70 p-3.5 space-y-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-iris-500/20 text-iris-300 font-bold font-display text-sm">
-            {(state.currentUser?.name || (state.role === 'tutor' ? state.profile.tutor : state.profile.student))[0]}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-bold text-white">
-              {state.currentUser?.name || (state.role === 'tutor' ? state.profile.tutor : state.profile.student)}
-            </p>
-            <p className="text-[10px] font-semibold text-mint-400 capitalize">
-              Rol: {state.role}
-            </p>
-          </div>
+      <div className="space-y-3">
+        {/* Contador amigable y minimalista */}
+        <div className="rounded-2xl border border-iris-500/20 bg-linear-to-br from-iris-600/15 to-transparent p-3.5 text-center">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-iris-300">Faltan para el examen</p>
+          <p className="font-display text-2xl font-black text-white mt-0.5">
+            {Math.max(0, days)} <span className="text-sm font-bold text-ink-200">días</span>
+          </p>
         </div>
 
-        <button
-          type="button"
-          id="sidebar-logout"
-          onClick={() => {
-            actions.logout()
-            window.location.hash = '#/inicio'
-            toast({ tone: 'info', title: 'Sesión cerrada exitosamente' })
-          }}
-          className="btn btn-ghost w-full py-2 text-xs font-semibold text-rose-300 border-rose-500/20 hover:bg-rose-500/15 gap-1.5"
-        >
-          <LogOut size={14} /> Cerrar Sesión
-        </button>
+        {/* Tarjeta de usuario activa con botón de salir bien claro */}
+        <div className="flex items-center justify-between rounded-2xl border border-white/8 bg-ink-950/60 p-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl font-display text-xs font-bold ${
+                isTutor ? 'bg-iris-500/20 text-iris-300' : 'bg-mint-400/20 text-mint-400'
+              }`}
+            >
+              {isTutor ? <UserCheck size={16} /> : <GraduationCap size={16} />}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-xs font-extrabold text-white">
+                {isTutor ? state.profile.tutor : state.profile.student}
+              </p>
+              <p className="text-[10px] text-ink-300 font-medium">
+                {isTutor ? 'Tutor' : 'Aspirante'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              actions.logout()
+              window.location.hash = '#/inicio'
+              toast({ tone: 'info', title: 'Hasta pronto 👋' })
+            }}
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl text-ink-300 hover:bg-rose-500/15 hover:text-rose-400 transition"
+            title="Cerrar sesión"
+          >
+            <LogOut size={15} />
+          </button>
+        </div>
       </div>
     </aside>
   )
@@ -152,84 +126,83 @@ function Sidebar() {
 
 function Header() {
   const { state, actions, navigate, isTutor, toast } = useApp()
+  const name = isTutor ? state.profile.tutor : state.profile.student
+
   return (
-    <header className="sticky top-0 z-20 border-b border-white/6 bg-ink-950/70 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-10">
+    <header className="sticky top-0 z-20 border-b border-white/6 bg-ink-950/80 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
         <div className="lg:hidden">
           <Logo compact />
         </div>
-        <div className="hidden min-w-0 lg:block">
-          <p className="truncate text-sm text-ink-300">
-            {greeting()}, <span className="font-semibold text-white">{isTutor ? state.profile.tutor : state.profile.student}</span>
-            {isTutor && <span className="text-ink-300"> · monitoreando a {state.profile.student}</span>}
+
+        <div className="hidden lg:block">
+          <p className="text-sm font-bold text-white">
+            {isTutor ? `Panel de Brian (Supervisando a ${state.profile.student})` : `¡Hola ${name}! 🍀`}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <span
-            className="chip border-orange-400/30 bg-orange-400/10 text-orange-300"
-            title="Días seguidos estudiando"
+
+        <div className="flex items-center gap-2.5">
+          {/* Racha con llama */}
+          <div
+            className="flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs font-bold text-amber-300"
+            title="Días de racha de estudio"
           >
-            <Flame size={14} className={state.streak.count >= 3 ? 'animate-pulse' : ''} />
-            {state.streak.count} {state.streak.count === 1 ? 'día' : 'días'}
-          </span>
+            <Flame size={14} className={state.streak.count > 0 ? 'text-amber-400 fill-amber-400' : ''} />
+            <span>{state.streak.count} {state.streak.count === 1 ? 'día' : 'días'}</span>
+          </div>
+
+          {/* Salir en celular */}
           <button
             type="button"
-            id="header-logout"
             onClick={() => {
               actions.logout()
               window.location.hash = '#/inicio'
-              toast({ tone: 'info', title: 'Sesión cerrada exitosamente' })
+              toast({ tone: 'info', title: 'Hasta pronto 👋' })
             }}
-            className="btn btn-ghost h-9 px-3 rounded-xl text-xs font-semibold text-rose-300 border border-rose-500/20 hover:bg-rose-500/15 gap-1.5"
-            title="Cerrar sesión"
+            className="flex h-8 items-center gap-1 rounded-xl border border-white/10 px-2.5 text-xs font-semibold text-rose-300 hover:bg-rose-500/10 lg:hidden"
           >
-            <LogOut size={15} />
-            <span className="hidden sm:inline">Salir</span>
+            <LogOut size={13} /> Salir
           </button>
+
+          {/* Ajustes en computadora */}
           <button
             type="button"
-            id="header-settings"
             onClick={() => navigate('ajustes')}
-            className="btn btn-ghost h-9 w-9 rounded-xl p-0"
-            aria-label="Ajustes"
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl text-ink-300 hover:bg-white/5 hover:text-white transition"
+            title="Ajustes"
           >
-            <Settings size={17} />
+            <Settings size={16} />
           </button>
         </div>
       </div>
-      {isTutor && (
-        <div className="border-t border-iris-400/20 bg-iris-500/10 py-1.5 text-center text-xs font-semibold text-iris-200">
-          Modo Tutor Activo · viendo el progreso de {state.profile.student}
-        </div>
-      )}
     </header>
   )
 }
 
 function MobileNav() {
   const { route, navigate } = useApp()
+
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-white/8 bg-ink-900/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-white/8 bg-ink-900/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-2xl lg:hidden"
       aria-label="Navegación móvil"
     >
-      <div className="mx-auto grid max-w-lg grid-cols-5">
+      <div className="mx-auto grid max-w-md grid-cols-5 py-1.5">
         {NAV_ITEMS.map(({ id, label, icon: Ico }) => {
           const active = route.view === id
           return (
             <button
               key={id}
-              id={`mnav-${id}`}
               type="button"
               onClick={() => navigate(id)}
-              className={`flex cursor-pointer flex-col items-center gap-1 py-2.5 text-[11px] font-semibold transition ${
-                active ? 'text-mint-400' : 'text-ink-300'
+              className={`flex cursor-pointer flex-col items-center gap-1 py-1 text-[11px] font-bold transition ${
+                active ? 'text-mint-400' : 'text-ink-300 hover:text-white'
               }`}
             >
-              <span className={`flex h-8 w-12 items-center justify-center rounded-full transition-all ${active ? 'bg-mint-400/15' : ''}`}>
-                <Ico size={20} />
+              <span className={`flex h-7 w-10 items-center justify-center rounded-full transition ${active ? 'bg-mint-400/20' : ''}`}>
+                <Ico size={18} strokeWidth={active ? 2.6 : 2} />
               </span>
-              {label}
+              <span>{label}</span>
             </button>
           )
         })}
@@ -242,9 +215,9 @@ export function AppShell({ children }) {
   return (
     <div className="min-h-dvh">
       <Sidebar />
-      <div className="lg:pl-68">
+      <div className="lg:pl-64">
         <Header />
-        <main className="mx-auto max-w-7xl px-4 pt-6 pb-28 sm:px-6 lg:px-10 lg:pb-12">{children}</main>
+        <main className="mx-auto max-w-5xl px-4 pt-6 pb-28 sm:px-6 lg:pb-12">{children}</main>
       </div>
       <MobileNav />
     </div>
