@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { SUBJECTS, SUBJECT_MAP } from '../data/subjects'
-import { TASK_CATALOG } from '../data/taskCatalog'
+import { TASK_CATALOG, DIFFICULTY_CONFIG } from '../data/taskCatalog'
 import { daysFromNow, daysUntil, formatDate, toDateKey } from '../lib/date'
 import { Modal } from '../components/ui/Modal'
 import { SubjectIcon } from '../components/ui/Icon'
@@ -35,6 +35,7 @@ export default function Tasks() {
   // Modal de catálogo de tareas para Brian (Tutor)
   const [isCatalogOpen, setIsCatalogOpen] = useState(false)
   const [catalogSubjectFilter, setCatalogSubjectFilter] = useState('todas')
+  const [catalogDifficultyFilter, setCatalogDifficultyFilter] = useState('todas') // 'todas' | 'facil' | 'medio' | 'dificil'
   const [selectedCatalogTask, setSelectedCatalogTask] = useState(null)
   const [customDays, setCustomDays] = useState(3)
   const [customPoints, setCustomPoints] = useState(25)
@@ -62,11 +63,14 @@ export default function Tasks() {
     return tasks
   }, [tasks, activeFilter])
 
-  // Catálogo de tareas filtrado
+  // Catálogo de tareas filtrado (por materia y dificultad, solo tutor)
   const filteredCatalog = useMemo(() => {
-    if (catalogSubjectFilter === 'todas') return TASK_CATALOG
-    return TASK_CATALOG.filter((t) => t.subjectId === catalogSubjectFilter)
-  }, [catalogSubjectFilter])
+    return TASK_CATALOG.filter((t) => {
+      const matchSubject = catalogSubjectFilter === 'todas' || t.subjectId === catalogSubjectFilter
+      const matchDiff = catalogDifficultyFilter === 'todas' || t.difficulty === catalogDifficultyFilter
+      return matchSubject && matchDiff
+    })
+  }, [catalogSubjectFilter, catalogDifficultyFilter])
 
   // 1. Abrir entrega de Ingrid
   const handleOpenSubmit = (task) => {
@@ -157,6 +161,7 @@ export default function Tasks() {
       title: selectedCatalogTask.title,
       description: selectedCatalogTask.description,
       subjectId: selectedCatalogTask.subjectId,
+      difficulty: selectedCatalogTask.difficulty, // Solo visible para el tutor
       type: selectedCatalogTask.type,
       points: Number(customPoints),
       dueDate: daysFromNow(Number(customDays)),
@@ -298,6 +303,16 @@ export default function Tasks() {
                         ? 'Entregada • Esperando revisión'
                         : 'Por hacer'}
                     </span>
+
+                    {/* Indicador de dificultad: SOLO VISIBLE PARA BRIAN (TUTOR) */}
+                    {isTutor && task.difficulty && DIFFICULTY_CONFIG[task.difficulty] && (
+                      <span
+                        className={`rounded-md px-2 py-0.5 text-[10px] font-bold border ${DIFFICULTY_CONFIG[task.difficulty].badge}`}
+                        title="Nivel de dificultad (Solo visible para ti como tutor)"
+                      >
+                        Nivel: {DIFFICULTY_CONFIG[task.difficulty].label}
+                      </span>
+                    )}
                   </div>
 
                   <h2 className="text-base font-bold text-white leading-snug">{task.title}</h2>
@@ -675,6 +690,32 @@ export default function Tasks() {
             ))}
           </div>
 
+          {/* Filtro por nivel de dificultad (Solo visible para el tutor Brian) */}
+          <div className="flex items-center gap-2 pt-2 border-t border-slate-800 text-xs">
+            <span className="text-[11px] text-slate-400 font-semibold">Nivel (solo tú lo ves):</span>
+            <div className="flex gap-1.5 flex-wrap">
+              {[
+                { id: 'todas', label: 'Todos los niveles' },
+                { id: 'facil', label: 'Fácil' },
+                { id: 'medio', label: 'Medio' },
+                { id: 'dificil', label: 'Difícil' },
+              ].map((d) => (
+                <button
+                  key={d.id}
+                  type="button"
+                  onClick={() => setCatalogDifficultyFilter(d.id)}
+                  className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition cursor-pointer ${
+                    catalogDifficultyFilter === d.id
+                      ? 'bg-slate-700 text-white shadow-sm'
+                      : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Lista de tareas prediseñadas */}
           <div className="max-h-96 overflow-y-auto space-y-2.5 pr-1">
             {filteredCatalog.map((task) => {
@@ -696,10 +737,18 @@ export default function Tasks() {
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] font-bold" style={{ color: subject?.color || '#38bdf8' }}>
-                      {subject?.name} • {task.ecoemsKey}
-                    </span>
-                    <span className="text-[10px] rounded bg-slate-800 px-1.5 py-0.5 text-slate-300 font-semibold">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[11px] font-bold" style={{ color: subject?.color || '#38bdf8' }}>
+                        {subject?.name} • {task.ecoemsKey}
+                      </span>
+                      {/* Indicador de dificultad (SOLO visible para ti) */}
+                      {task.difficulty && DIFFICULTY_CONFIG[task.difficulty] && (
+                        <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold border ${DIFFICULTY_CONFIG[task.difficulty].badge}`}>
+                          {DIFFICULTY_CONFIG[task.difficulty].label}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] rounded bg-slate-800 px-1.5 py-0.5 text-slate-300 font-semibold shrink-0">
                       +{task.points} pts
                     </span>
                   </div>
@@ -719,7 +768,14 @@ export default function Tasks() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold text-white">Tarea seleccionada:</p>
-                  <p className="text-xs text-indigo-300 font-medium">{selectedCatalogTask.title}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-xs text-indigo-300 font-medium">{selectedCatalogTask.title}</p>
+                    {selectedCatalogTask.difficulty && DIFFICULTY_CONFIG[selectedCatalogTask.difficulty] && (
+                      <span className={`rounded px-1.5 py-0.2 text-[10px] font-bold border ${DIFFICULTY_CONFIG[selectedCatalogTask.difficulty].badge}`}>
+                        {DIFFICULTY_CONFIG[selectedCatalogTask.difficulty].label}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <label className="text-[11px] text-slate-300">Días:</label>

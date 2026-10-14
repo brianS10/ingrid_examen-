@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { SUBJECTS, SUBJECT_MAP, ALL_TOPICS } from '../data/subjects'
-import { TASK_CATALOG } from '../data/taskCatalog'
+import { TASK_CATALOG, DIFFICULTY_CONFIG } from '../data/taskCatalog'
 import { globalProgress, subjectProgress, masteryBySubject } from '../lib/progress'
 import { daysFromNow, daysUntil, formatDate } from '../lib/date'
 import { Modal } from '../components/ui/Modal'
@@ -51,6 +51,7 @@ export default function TutorDashboard() {
       title: selectedCatalogTask.title,
       description: selectedCatalogTask.description,
       subjectId: selectedCatalogTask.subjectId,
+      difficulty: selectedCatalogTask.difficulty, // Solo visible para el tutor
       type: selectedCatalogTask.type,
       points: Number(customPoints),
       dueDate: daysFromNow(Number(customDays)),
@@ -223,9 +224,16 @@ export default function TutorDashboard() {
                       <span className="text-xs font-bold" style={{ color: subject?.color }}>
                         {subject?.name}
                       </span>
-                      <span className="chip border-white/10 bg-white/5 text-[10px] text-ink-200">
-                        {cat.ecoemsKey}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        {cat.difficulty && DIFFICULTY_CONFIG[cat.difficulty] && (
+                          <span className={`chip text-[10px] font-bold ${DIFFICULTY_CONFIG[cat.difficulty].badge}`}>
+                            {DIFFICULTY_CONFIG[cat.difficulty].label}
+                          </span>
+                        )}
+                        <span className="chip border-white/10 bg-white/5 text-[10px] text-ink-200">
+                          {cat.ecoemsKey}
+                        </span>
+                      </div>
                     </div>
 
                     <h3 className="font-bold text-sm text-white leading-snug">
@@ -272,7 +280,7 @@ export default function TutorDashboard() {
                 className="card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-white/8"
               >
                 <div className="space-y-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-bold" style={{ color: subject?.color }}>
                       {subject?.name || 'General'}
                     </span>
@@ -287,6 +295,11 @@ export default function TutorDashboard() {
                     >
                       {t.status === 'revisada' ? `Calificada (${t.review?.grade}/10)` : t.status === 'entregada' ? 'Entregada por Ingrid' : 'Pendiente'}
                     </span>
+                    {t.difficulty && DIFFICULTY_CONFIG[t.difficulty] && (
+                      <span className={`chip text-[10px] font-bold ${DIFFICULTY_CONFIG[t.difficulty].badge}`}>
+                        Nivel: {DIFFICULTY_CONFIG[t.difficulty].label}
+                      </span>
+                    )}
                   </div>
                   <h3 className="font-bold text-sm text-white truncate">{t.title}</h3>
                   <p className="text-xs text-ink-300 line-clamp-1">{t.description}</p>
@@ -357,8 +370,15 @@ export default function TutorDashboard() {
         }
       >
         <div className="space-y-4 text-xs sm:text-sm">
-          <div className="card bg-ink-950/60 p-4 border border-white/8 space-y-1">
-            <p className="font-bold text-white">Instrucciones que verá Ingrid:</p>
+          <div className="card bg-ink-950/60 p-4 border border-white/8 space-y-2">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <p className="font-bold text-white">Instrucciones que verá Ingrid:</p>
+              {selectedCatalogTask?.difficulty && DIFFICULTY_CONFIG[selectedCatalogTask.difficulty] && (
+                <span className={`chip text-[10px] font-bold ${DIFFICULTY_CONFIG[selectedCatalogTask.difficulty].badge}`}>
+                  Nivel: {DIFFICULTY_CONFIG[selectedCatalogTask.difficulty].label} (Solo tú lo ves)
+                </span>
+              )}
+            </div>
             <p className="text-ink-200">{selectedCatalogTask?.description}</p>
           </div>
 

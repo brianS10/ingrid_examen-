@@ -185,15 +185,17 @@ function Header() {
             <LogOut size={13} /> Salir
           </button>
 
-          {/* Ajustes */}
-          <button
-            type="button"
-            onClick={() => navigate('ajustes')}
-            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition"
-            title="Ajustes de la app"
-          >
-            <Settings size={16} />
-          </button>
+          {/* Ajustes: SOLO visible para el tutor / admin (Brian) */}
+          {isTutor && (
+            <button
+              type="button"
+              onClick={() => navigate('ajustes')}
+              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition"
+              title="Ajustes del tutor"
+            >
+              <Settings size={16} />
+            </button>
+          )}
         </div>
       </div>
     </header>

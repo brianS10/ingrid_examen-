@@ -19,7 +19,13 @@ import Analytics from './pages/Analytics'
 import SettingsPage from './pages/SettingsPage'
 
 function PageRouter() {
-  const { route, isTutor } = useApp()
+  const { route, isTutor, navigate } = useApp()
+
+  // Protección de rol: los estudiantes no deben ver ni acceder a ajustes técnicos
+  if (route.view === 'ajustes' && !isTutor) {
+    navigate('inicio')
+    return <Dashboard />
+  }
 
   switch (route.view) {
     case 'inicio':
@@ -33,7 +39,7 @@ function PageRouter() {
     case 'estadisticas':
       return <Analytics />
     case 'ajustes':
-      return <SettingsPage />
+      return isTutor ? <SettingsPage /> : <Dashboard />
     default:
       return isTutor ? <TutorDashboard /> : <Dashboard />
   }
@@ -49,6 +55,7 @@ export default function App() {
         <LoginPage
           onLogin={(user) => {
             actions.login(user)
+            window.location.hash = '#/inicio'
             toast({
               tone: 'success',
               title: `¡Bienvenid${user.name === 'Ingrid' ? 'a' : 'o'}, ${user.name}! 👋`,
