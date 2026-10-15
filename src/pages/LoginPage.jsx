@@ -6,7 +6,6 @@
  */
 import { useState } from 'react'
 import { Eye, EyeOff, GraduationCap, Lock, LogIn, Rocket, Sparkles, User, UserCheck } from 'lucide-react'
-import heroImg from '../assets/hero-rocket.jpg'
 
 export default function LoginPage({ onLogin }) {
   const [username, setUsername] = useState('')
@@ -40,7 +39,7 @@ export default function LoginPage({ onLogin }) {
         setError('Usuario o contraseña incorrectos. Verifica tus datos.')
         setLoading(false)
       }
-    }, 400)
+    }, 350)
   }
 
   // Atajos para pruebas rápidas
@@ -52,23 +51,23 @@ export default function LoginPage({ onLogin }) {
 
   return (
     <div className="relative min-h-dvh flex items-center justify-center p-4 sm:p-6 overflow-hidden">
-      {/* Fondo con destellos */}
-      <div className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-iris-500/20 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-mint-400/15 blur-3xl" />
+      {/* Fondos suaves y naturales */}
+      <div className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-emerald-500/10 blur-3xl" />
 
       <div className="relative w-full max-w-md animate-fade-up">
         {/* Logo & Marca */}
         <div className="text-center mb-8">
-          <div className="inline-flex h-16 w-16 items-center justify-center rounded-3xl bg-linear-to-br from-iris-500 via-sky-glow to-mint-400 p-0.5 shadow-2xl shadow-iris-600/40 mb-4">
-            <div className="flex h-full w-full items-center justify-center rounded-[22px] bg-ink-950/40 backdrop-blur-sm">
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-tr from-indigo-500 via-sky-500 to-emerald-400 p-0.5 shadow-xl shadow-indigo-500/20 mb-4">
+            <div className="flex h-full w-full items-center justify-center rounded-[22px] bg-slate-950/80 backdrop-blur-sm">
               <Rocket size={32} className="text-white" strokeWidth={2.4} />
             </div>
           </div>
           <h1 className="font-display text-3xl font-extrabold text-white sm:text-4xl">
             Misión Prepa
           </h1>
-          <p className="mt-2 text-sm text-ink-300">
-            Plataforma interactiva de estudio y tutoría para el examen COMIPEMS
+          <p className="mt-2 text-sm text-slate-300">
+            Plataforma interactiva de estudio y tutoría para el examen <strong className="text-emerald-400">ECOEMS / COMIPEMS</strong>
           </p>
         </div>
 
@@ -154,45 +153,45 @@ export default function LoginPage({ onLogin }) {
           </form>
 
           {/* Accesos rápidos preconfigurados para comodidad */}
-          {/*<div className="mt-6 pt-5 border-t border-white/6 space-y-2.5">
-            <p className="text-[11px] font-bold text-ink-300 uppercase tracking-wider text-center">
+          <div className="mt-6 pt-5 border-t border-slate-800 space-y-2.5">
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">
               Seleccionar perfil rápido
             </p>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => fillCredentials('ingrid', 'sanchez')}
-                className="flex items-center gap-2 rounded-xl border border-white/8 bg-ink-950/40 p-2.5 text-left text-xs hover:border-mint-400/40 hover:bg-mint-400/10 transition group"
+                className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-950/60 p-2.5 text-left text-xs hover:border-emerald-500/40 hover:bg-emerald-500/10 transition cursor-pointer group"
               >
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-mint-400/20 text-mint-400 group-hover:scale-105 transition">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400 group-hover:scale-105 transition">
                   <GraduationCap size={15} />
                 </span>
                 <div className="min-w-0">
                   <p className="font-bold text-white truncate">Ingrid</p>
-                  <p className="text-[10px] text-ink-300">Estudiante</p>
+                  <p className="text-[10px] text-slate-400">Estudiante</p>
                 </div>
               </button>
 
               <button
                 type="button"
                 onClick={() => fillCredentials('brian', 'sanchez')}
-                className="flex items-center gap-2 rounded-xl border border-white/8 bg-ink-950/40 p-2.5 text-left text-xs hover:border-iris-400/40 hover:bg-iris-500/10 transition group"
+                className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-950/60 p-2.5 text-left text-xs hover:border-indigo-400/40 hover:bg-indigo-500/10 transition cursor-pointer group"
               >
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-iris-500/20 text-iris-300 group-hover:scale-105 transition">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-300 group-hover:scale-105 transition">
                   <UserCheck size={15} />
                 </span>
                 <div className="min-w-0">
                   <p className="font-bold text-white truncate">Brian</p>
-                  <p className="text-[10px] text-ink-300">Tutor</p>
+                  <p className="text-[10px] text-slate-400">Tutor</p>
                 </div>
               </button>
             </div>
-          </div>*/}
+          </div>
         </div>
 
         {/* Mensaje de pie */}
-        <p className="mt-6 text-center text-xs text-ink-300">
-          Preparación para el examen de ingreso a nivel medio superior · UNAM / IPN / COMIPEMS
+        <p className="mt-6 text-center text-xs text-slate-400">
+          Preparación para el examen de ingreso a preparatoria · ECOEMS / COMIPEMS
         </p>
       </div>
     </div>

@@ -28,6 +28,7 @@ export default function Simulator() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [answers, setAnswers] = useState({}) // { [qId]: optionIndex }
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
+  const [showReview, setShowReview] = useState(false)
   const timerRef = useRef(null)
 
   // Iniciar Quiz directo
@@ -50,6 +51,7 @@ export default function Simulator() {
     setCurrentIndex(0)
     setAnswers({})
     setElapsedSeconds(0)
+    setShowReview(false)
     setMode('running')
   }
 
@@ -301,45 +303,131 @@ export default function Simulator() {
 
       {/* ───────────────── 3. RESULTADOS CELEBRATORIOS ───────────────── */}
       {mode === 'results' && (
-        <div className="card p-6 sm:p-8 text-center space-y-5 animate-fade-up">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-mint-400/20 text-mint-400 shadow-xl">
-            <Trophy size={32} />
+        <div className="card p-6 sm:p-8 space-y-6 animate-fade-up">
+          <div className="text-center space-y-3">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-emerald-500/20 text-emerald-400 shadow-xl">
+              <Trophy size={32} />
+            </div>
+
+            <div className="space-y-1">
+              <h2 className="text-2xl font-extrabold text-white">¡Gran trabajo!</h2>
+              <p className="text-xs sm:text-sm text-slate-300">
+                Cada quiz que haces te acerca más a tu objetivo en el examen <strong className="text-emerald-400">ECOEMS / COMIPEMS</strong>.
+              </p>
+            </div>
+
+            {/* Puntaje destacado */}
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 max-w-sm mx-auto">
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Aciertos logrados</p>
+              <p className="text-4xl font-black text-emerald-400 mt-1 tabular-nums">
+                {activeQuestions.filter((q) => answers[q.id] === q.answer).length} / {activeQuestions.length}
+              </p>
+              <p className="text-xs text-slate-400 mt-1">
+                Tiempo invertido: {formatDuration(elapsedSeconds)}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setMode('config')}
+                className="btn btn-mint px-6 py-2.5 font-bold text-xs"
+              >
+                <RotateCcw size={14} /> Practicar de nuevo
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('inicio')}
+                className="btn btn-ghost px-5 py-2.5 text-xs font-bold"
+              >
+                Volver a Mi Día
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowReview(!showReview)}
+                className="rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-2.5 text-xs font-bold text-slate-200 hover:text-white transition cursor-pointer"
+              >
+                {showReview ? 'Ocultar revisión' : '🔍 Revisar reactivos y respuestas'}
+              </button>
+            </div>
           </div>
 
-          <div className="space-y-1">
-            <h2 className="text-2xl font-extrabold text-white">¡Gran trabajo!</h2>
-            <p className="text-xs sm:text-sm text-ink-300">
-              Cada quiz que haces te acerca más a tu objetivo en el COMIPEMS.
-            </p>
-          </div>
+          {/* Desglose detallado de reactivos para estudiar */}
+          {showReview && (
+            <div className="mt-6 pt-6 border-t border-slate-800 space-y-4 text-left">
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider text-center sm:text-left">
+                Revisión reactivo por reactivo:
+              </h3>
 
-          {/* Puntaje destacado */}
-          <div className="rounded-3xl border border-white/8 bg-ink-950/60 p-5 max-w-sm mx-auto">
-            <p className="text-xs text-ink-300 font-bold uppercase tracking-wider">Aciertos logrados</p>
-            <p className="text-4xl font-black text-mint-400 mt-1 tabular-nums">
-              {activeQuestions.filter((q) => answers[q.id] === q.answer).length} / {activeQuestions.length}
-            </p>
-            <p className="text-xs text-ink-300 mt-1">
-              Tiempo invertido: {formatDuration(elapsedSeconds)}
-            </p>
-          </div>
+              <div className="space-y-3">
+                {activeQuestions.map((q, idx) => {
+                  const studentAns = answers[q.id]
+                  const isCorrect = studentAns === q.answer
+                  const subject = SUBJECT_MAP[q.subjectId]
 
-          <div className="flex flex-wrap justify-center gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => setMode('config')}
-              className="btn btn-mint px-6 py-2.5 font-bold text-xs"
-            >
-              <RotateCcw size={14} /> Practicar de nuevo
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('inicio')}
-              className="btn btn-ghost px-5 py-2.5 text-xs font-bold"
-            >
-              Volver a Mi Día
-            </button>
-          </div>
+                  return (
+                    <div
+                      key={q.id}
+                      className={`rounded-2xl border p-4.5 space-y-2.5 transition ${
+                        isCorrect
+                          ? 'border-emerald-500/25 bg-slate-950/60'
+                          : 'border-rose-500/30 bg-rose-500/5'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`flex h-6 w-6 items-center justify-center rounded-lg text-xs font-bold ${
+                              isCorrect ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
+                            }`}
+                          >
+                            {idx + 1}
+                          </span>
+                          <span className="text-xs font-bold" style={{ color: subject?.color || '#38bdf8' }}>
+                            {subject?.name}
+                          </span>
+                        </div>
+
+                        <span
+                          className={`chip text-[10px] font-bold ${
+                            isCorrect
+                              ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+                              : 'border-rose-500/30 bg-rose-500/10 text-rose-300'
+                          }`}
+                        >
+                          {isCorrect ? '✓ Correcta' : '✕ Incorrecta'}
+                        </span>
+                      </div>
+
+                      <div className="text-xs sm:text-sm font-semibold text-white">
+                        <RichText text={q.question} />
+                      </div>
+
+                      {/* Comparación de respuestas */}
+                      <div className="space-y-1 text-xs">
+                        {!isCorrect && (
+                          <p className="text-rose-300">
+                            <strong>Tu respuesta:</strong> {studentAns !== undefined ? `${OPTION_LETTERS[studentAns]}) ${q.options[studentAns]}` : 'Sin responder'}
+                          </p>
+                        )}
+                        <p className="text-emerald-300">
+                          <strong>Respuesta correcta:</strong> {OPTION_LETTERS[q.answer]}) {q.options[q.answer]}
+                        </p>
+                      </div>
+
+                      {/* Explicación */}
+                      {q.explanation && (
+                        <div className="rounded-xl bg-slate-900/90 p-3 text-xs text-slate-300 border border-slate-800/80">
+                          <strong className="text-white block mb-0.5">Explicación:</strong>
+                          <RichText text={q.explanation} />
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

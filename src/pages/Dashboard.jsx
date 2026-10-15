@@ -85,8 +85,8 @@ export default function Dashboard() {
         {/* Barra de progreso global del temario */}
         <div className="mt-6 pt-5 border-t border-white/8 space-y-2">
           <div className="flex items-center justify-between text-xs font-semibold">
-            <span className="text-ink-200">Avance de toda la guía COMIPEMS</span>
-            <span className="text-mint-400 font-extrabold">{global.dominado} de {global.total} temas completados ({global.pct}%)</span>
+            <span className="text-slate-300">Avance de la guía ECOEMS / COMIPEMS</span>
+            <span className="text-emerald-400 font-extrabold">{global.dominado} de {global.total} temas completados ({global.pct}%)</span>
           </div>
           <ProgressBar value={global.pct} height={8} />
         </div>
@@ -151,7 +151,7 @@ export default function Dashboard() {
               <Trophy size={15} />
             </div>
             <h2 className="text-base font-bold text-white">
-              {isTutor ? 'Tareas asignadas' : 'Tareas que te dejó Brian'}
+              {isTutor ? 'Tareas asignadas' : `Tareas que te dejó ${state.profile.tutor}`}
             </h2>
           </div>
           <button

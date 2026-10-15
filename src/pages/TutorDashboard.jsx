@@ -24,6 +24,8 @@ import { ProgressBar } from '../components/ui/Progress'
 export default function TutorDashboard() {
   const { state, actions, toast, navigate } = useApp()
   const [activeTab, setActiveTab] = useState('catalogo') // 'catalogo' | 'asignadas' | 'progreso'
+  const [catalogSubject, setCatalogSubject] = useState('todas')
+  const [catalogDifficulty, setCatalogDifficulty] = useState('todas')
 
   // Modal para asignar tarea del catálogo
   const [selectedCatalogTask, setSelectedCatalogTask] = useState(null)
@@ -42,6 +44,15 @@ export default function TutorDashboard() {
   const weakSubjects = useMemo(() => masteryBySubject(state).slice(0, 3), [state])
   const pendingReviews = state.tasks.filter((t) => t.status === 'entregada')
   const assignedTasks = state.tasks
+
+  // Catálogo filtrado por materia y nivel de dificultad
+  const visibleCatalog = useMemo(() => {
+    return TASK_CATALOG.filter((t) => {
+      const matchSub = catalogSubject === 'todas' || t.subjectId === catalogSubject
+      const matchDiff = catalogDifficulty === 'todas' || t.difficulty === catalogDifficulty
+      return matchSub && matchDiff
+    })
+  }, [catalogSubject, catalogDifficulty])
 
   // Asignar tarea desde el catálogo
   const handleAssignFromCatalog = () => {
@@ -205,12 +216,68 @@ export default function TutorDashboard() {
       {/* ───────── PESTAÑA A: CATÁLOGO DE TAREAS LISTAS ───────── */}
       {activeTab === 'catalogo' && (
         <section className="space-y-3 animate-fade-up">
-          <p className="text-xs text-ink-300">
+          <p className="text-xs text-slate-300">
             Selecciona una actividad prediseñada según el tema que quieras que refuerce Ingrid esta semana.
           </p>
 
+          {/* Filtros por Materia y Dificultad para el Tutor */}
+          <div className="space-y-2 pt-1 pb-1">
+            <div className="no-scrollbar flex gap-1.5 overflow-x-auto pb-1 text-xs">
+              <button
+                type="button"
+                onClick={() => setCatalogSubject('todas')}
+                className={`rounded-lg px-3 py-1.5 font-bold transition cursor-pointer shrink-0 ${
+                  catalogSubject === 'todas'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                }`}
+              >
+                Todas las materias
+              </button>
+              {SUBJECTS.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setCatalogSubject(s.id)}
+                  className={`rounded-lg px-3 py-1.5 font-bold transition cursor-pointer shrink-0 ${
+                    catalogSubject === s.id
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  }`}
+                >
+                  {s.name}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2 text-xs flex-wrap">
+              <span className="text-[11px] text-slate-400 font-semibold">Dificultad (solo tú lo ves):</span>
+              <div className="flex gap-1.5 flex-wrap">
+                {[
+                  { id: 'todas', label: 'Todos los niveles' },
+                  { id: 'facil', label: 'Fácil' },
+                  { id: 'medio', label: 'Medio' },
+                  { id: 'dificil', label: 'Difícil' },
+                ].map((d) => (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => setCatalogDifficulty(d.id)}
+                    className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition cursor-pointer ${
+                      catalogDifficulty === d.id
+                        ? 'bg-slate-700 text-white shadow-sm'
+                        : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                    }`}
+                  >
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <div className="grid gap-3 sm:grid-cols-2">
-            {TASK_CATALOG.map((cat) => {
+            {visibleCatalog.map((cat) => {
               const subject = SUBJECT_MAP[cat.subjectId]
               const alreadyAssigned = state.tasks.some((t) => t.title === cat.title)
 
@@ -265,6 +332,12 @@ export default function TutorDashboard() {
               )
             })}
           </div>
+
+          {visibleCatalog.length === 0 && (
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8 text-center text-xs text-slate-400">
+              No hay tareas en el catálogo con los filtros seleccionados.
+            </div>
+          )}
         </section>
       )}
 
@@ -322,7 +395,11 @@ export default function TutorDashboard() {
                   {t.status === 'revisada' && (
                     <button
                       type="button"
-                      onClick={() => setReviewingTask(t)}
+                      onClick={() => {
+                        setReviewingTask(t)
+                        setReviewGrade(t.review?.grade ?? 10)
+                        setReviewComment(t.review?.feedback ?? '')
+                      }}
                       className="btn btn-ghost text-xs px-3 py-1.5 font-bold text-ink-200"
                     >
                       Ver entrega

@@ -86,13 +86,13 @@ export default function Analytics() {
         </div>
 
         <div className="card p-5">
-          <p className="flex items-center gap-2 text-xs font-bold text-iris-300 uppercase tracking-wider">
-            <Target size={15} /> Meta COMIPEMS
+          <p className="flex items-center gap-2 text-xs font-bold text-indigo-300 uppercase tracking-wider">
+            <Target size={15} /> Meta ECOEMS / COMIPEMS
           </p>
           <p className="mt-2 text-xl font-black text-white tabular-nums">
-            {lastSim ? `${lastSim.correct} / 128` : '—'}
+            {lastSim ? `${lastSim.correct} / 128` : '0 / 128'}
           </p>
-          <p className="text-xs text-ink-300 mt-1">
+          <p className="text-xs text-slate-400 mt-1">
             Objetivo: {state.profile.goalScore} aciertos ({state.profile.targetSchool})
           </p>
         </div>
@@ -104,7 +104,7 @@ export default function Analytics() {
           <p className="mt-2 text-xl font-black text-white tabular-nums">
             {badges.filter((b) => b.unlocked).length} de {badges.length}
           </p>
-          <p className="text-xs text-ink-300 mt-1">
+          <p className="text-xs text-slate-400 mt-1">
             {Math.round((badges.filter((b) => b.unlocked).length / badges.length) * 100)}% de insignias
           </p>
         </div>
@@ -118,7 +118,7 @@ export default function Analytics() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="section-title">Radar de Dominio por Materia</h3>
-                <p className="text-xs text-ink-300 mt-1">
+                <p className="text-xs text-slate-400 mt-1">
                   Promedio ponderado entre temas completados y precisión en simulacros.
                 </p>
               </div>
@@ -140,18 +140,18 @@ export default function Analytics() {
                   <Radar
                     name="Dominio (%)"
                     dataKey="dominio"
-                    stroke="#6ef0c3"
-                    fill="#34d9a5"
-                    fillOpacity={0.4}
+                    stroke="#10b981"
+                    fill="#10b981"
+                    fillOpacity={0.35}
                   />
                 </RadarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          <div className="mt-2 flex items-center justify-center gap-4 text-xs text-ink-300">
+          <div className="mt-2 flex items-center justify-center gap-4 text-xs text-slate-400">
             <span className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded-full bg-mint-400" /> Nivel de dominio actual (%)
+              <span className="h-3 w-3 rounded-full bg-emerald-400" /> Nivel de dominio actual (%)
             </span>
           </div>
         </section>
@@ -162,45 +162,64 @@ export default function Analytics() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="section-title">Evolución de Aciertos</h3>
-                <p className="text-xs text-ink-300 mt-1">
+                <p className="text-xs text-slate-400 mt-1">
                   Historial de puntajes en cuestionarios y simulacros oficiales.
                 </p>
               </div>
-              <span className="chip border-iris-400/30 bg-iris-500/10 text-iris-300 text-xs">
-                Meta: {state.profile.goalScore}
+              <span className="chip border-indigo-400/30 bg-indigo-500/10 text-indigo-300 text-xs font-bold">
+                Meta: {state.profile.goalScore} aciertos
               </span>
             </div>
 
-            <div className="h-72 w-full mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={historyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.05)" />
-                  <XAxis dataKey="name" tick={{ fill: '#8d9acb', fontSize: 11 }} />
-                  <YAxis domain={[0, 128]} tick={{ fill: '#8d9acb', fontSize: 11 }} />
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const d = payload[0].payload
-                        return (
-                          <div className="rounded-2xl border border-white/10 bg-ink-900/95 p-3 shadow-xl text-xs">
-                            <p className="font-bold text-white">{d.fullName}</p>
-                            <p className="text-ink-300">{d.date}</p>
-                            <p className="mt-1 font-bold text-mint-400">
-                              {d.aciertos} / {d.total} aciertos ({d.porcentaje}%)
-                            </p>
-                          </div>
-                        )
-                      }
-                      return null
-                    }}
-                  />
-                  <Bar dataKey="aciertos" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {historyData.length === 0 ? (
+              <div className="h-72 w-full mt-4 flex flex-col items-center justify-center rounded-2xl border border-slate-800 bg-slate-950/40 p-6 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/15 text-indigo-400 mb-3">
+                  <ChartIcon size={24} />
+                </div>
+                <p className="text-sm font-bold text-white">Sin cuestionarios realizados todavía</p>
+                <p className="text-xs text-slate-400 mt-1 max-w-xs">
+                  Al completar tus primeros quizzes en la pestaña Practicar, aquí verás la gráfica con tu evolución de aciertos.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => navigate('simulador')}
+                  className="btn btn-mint text-xs font-bold px-4 py-2 mt-4"
+                >
+                  ⚡ Hacer mi primer quiz
+                </button>
+              </div>
+            ) : (
+              <div className="h-72 w-full mt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={historyData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.05)" />
+                    <XAxis dataKey="name" tick={{ fill: '#8d9acb', fontSize: 11 }} />
+                    <YAxis domain={[0, 128]} tick={{ fill: '#8d9acb', fontSize: 11 }} />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const d = payload[0].payload
+                          return (
+                            <div className="rounded-2xl border border-slate-700 bg-slate-900/95 p-3 shadow-xl text-xs">
+                              <p className="font-bold text-white">{d.fullName}</p>
+                              <p className="text-slate-400">{d.date}</p>
+                              <p className="mt-1 font-bold text-emerald-400">
+                                {d.aciertos} / {d.total} aciertos ({d.porcentaje}%)
+                              </p>
+                            </div>
+                          )
+                        }
+                        return null
+                      }}
+                    />
+                    <Bar dataKey="aciertos" fill="#6366f1" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
 
-          <p className="text-center text-xs text-ink-300 mt-2">
+          <p className="text-center text-xs text-slate-400 mt-2">
             La constancia es la clave: cada prueba identifica lagunas para reforzar.
           </p>
         </section>

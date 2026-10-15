@@ -136,7 +136,7 @@ export default function SettingsPage() {
           </div>
 
           <div className="sm:col-span-2">
-            <label className="label">Fecha y hora del examen COMIPEMS</label>
+            <label className="label">Fecha y hora del examen ECOEMS / COMIPEMS</label>
             <input
               type="datetime-local"
               className="input"

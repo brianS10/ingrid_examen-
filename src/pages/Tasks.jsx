@@ -121,7 +121,7 @@ export default function Tasks() {
     toast({
       tone: 'success',
       title: '¡Tarea entregada! 🎉',
-      description: 'Brian ya puede revisar tu libreta y dejarte comentarios.',
+      description: `${state.profile.tutor} ya puede revisar tu libreta y dejarte comentarios.`,
     })
   }
 
@@ -187,7 +187,7 @@ export default function Tasks() {
           <p className="text-xs text-slate-400 mt-1">
             {isTutor
               ? `Supervisa los ejercicios de ${state.profile.student}, revisa fotos de su libreta y asígnale nuevas actividades.`
-              : 'Resuelve tus ejercicios en tu cuaderno y sube fotos de tu libreta para que Brian las revise.'}
+              : `Resuelve tus ejercicios en tu cuaderno y sube fotos de tu libreta para que ${state.profile.tutor} las revise.`}
           </p>
         </div>
 
@@ -370,11 +370,11 @@ export default function Tasks() {
                 </div>
               )}
 
-              {/* Comentarios y calificación de Brian */}
+              {/* Comentarios y calificación del Tutor */}
               {task.review && (
                 <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3.5 space-y-1 text-xs">
                   <div className="flex items-center justify-between">
-                    <p className="font-bold text-emerald-300">Calificación de Brian:</p>
+                    <p className="font-bold text-emerald-300">Calificación de {state.profile.tutor}:</p>
                     <span className="rounded-lg bg-emerald-500/20 px-2 py-0.5 font-black text-emerald-300 text-sm">
                       {task.review.grade} / 10
                     </span>
@@ -479,7 +479,7 @@ export default function Tasks() {
               className="flex items-center gap-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-4 py-2 text-xs font-bold text-slate-950 cursor-pointer shadow-md shadow-emerald-500/20"
               onClick={handleSaveSubmit}
             >
-              <Send size={14} /> Enviar libreta a Brian
+              <Send size={14} /> Enviar libreta a {state.profile.tutor}
             </button>
           </>
         }

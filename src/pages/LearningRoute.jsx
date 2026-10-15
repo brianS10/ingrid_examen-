@@ -130,8 +130,8 @@ export default function LearningRoute() {
                   </div>
 
                   {topic.tip && (
-                    <p className="text-xs text-iris-300 line-clamp-1 italic">
-                      💡 Consejo de Brian: {topic.tip}
+                    <p className="text-xs text-indigo-300 line-clamp-1 italic">
+                      💡 Consejo de {state.profile.tutor}: {topic.tip}
                     </p>
                   )}
                 </div>
