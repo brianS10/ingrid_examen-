@@ -68,17 +68,23 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => navigate('ruta', { subject: todayTopic.subjectId, topic: todayTopic.id })}
-              className="btn btn-mint px-6 py-3.5 text-sm font-extrabold shadow-xl shadow-mint-500/20 gap-2 text-center"
+              className="btn btn-mint px-6 py-3.5 text-xs sm:text-sm font-extrabold shadow-xl shadow-mint-500/20 gap-2 text-center cursor-pointer"
             >
-              <Play size={16} fill="currentColor" /> {isTutor ? 'Ver tema de hoy' : '¡Empezar a estudiar!'}
+              <BookOpen size={16} /> {isTutor ? 'Ver tema de hoy' : '📖 Leer explicación del tema'}
             </button>
 
             <button
               type="button"
-              onClick={() => navigate('simulador')}
-              className="btn btn-ghost px-4 py-2.5 text-xs font-bold text-ink-100 hover:text-white"
+              onClick={() =>
+                navigate('simulador', {
+                  topic: todayTopic.id,
+                  subject: todayTopic.subjectId,
+                  auto: 'true',
+                })
+              }
+              className="btn btn-ghost px-4 py-2.5 text-xs font-bold text-amber-300 hover:text-white border border-amber-400/30 hover:bg-amber-400/10 transition cursor-pointer"
             >
-              <Zap size={14} className="text-amber-400" /> Hacer un test rápido (10 min)
+              <Zap size={14} className="text-amber-400" /> ⚡ Hacer Quiz de este tema
             </button>
           </div>
         </div>

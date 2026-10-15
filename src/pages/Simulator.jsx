@@ -8,12 +8,12 @@
  */
 import { useEffect, useMemo, useState, useRef } from 'react'
 import {
-  AlertCircle, ArrowLeft, ArrowRight, Award, CheckCircle2, ChevronRight,
+  AlertCircle, ArrowLeft, ArrowRight, Award, BookOpen, CheckCircle2, ChevronRight,
   Clock, Play, RotateCcw, Sparkles, Trophy, XCircle, Zap
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { QUESTIONS, OPTION_LETTERS } from '../data/questions'
-import { SUBJECTS, SUBJECT_MAP } from '../data/subjects'
+import { SUBJECTS, SUBJECT_MAP, TOPIC_MAP } from '../data/subjects'
 import { formatClock, formatDuration, daysFromNow } from '../lib/date'
 import { ProgressBar } from '../components/ui/Progress'
 import { RichText } from '../components/ui/RichText'
@@ -23,6 +23,9 @@ export default function Simulator() {
   const { state, actions, route, toast, navigate } = useApp()
   const [mode, setMode] = useState('config') // 'config' | 'running' | 'results'
 
+  // Contexto de tema (si el quiz fue disparado desde un tema específico)
+  const [topicContext, setTopicContext] = useState(null) // { topicId, subjectId, topicTitle }
+
   // Configuración simplificada
   const [activeQuestions, setActiveQuestions] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -31,8 +34,37 @@ export default function Simulator() {
   const [showReview, setShowReview] = useState(false)
   const timerRef = useRef(null)
 
-  // Iniciar Quiz directo
+  // Iniciar Quiz de un tema específico
+  const handleStartTopicQuiz = (topicId, subjectId) => {
+    const topic = TOPIC_MAP[topicId]
+    const subject = SUBJECT_MAP[subjectId] || SUBJECTS[0]
+
+    // 1. Preguntas de este tema exacto
+    const directQuestions = QUESTIONS.filter((q) => q.topicId === topicId)
+    // 2. Preguntas de la misma materia para tener un quiz de 5 a 8 reactivos
+    const otherQuestions = QUESTIONS.filter(
+      (q) => q.subjectId === subject.id && q.topicId !== topicId
+    ).sort(() => 0.5 - Math.random())
+
+    const combined = [...directQuestions, ...otherQuestions].slice(0, Math.min(8, Math.max(5, directQuestions.length)))
+    const finalSelected = combined.length > 0 ? combined : QUESTIONS.slice(0, 5)
+
+    setTopicContext({
+      topicId,
+      subjectId: subject.id,
+      topicTitle: topic?.title || 'Tema de estudio',
+    })
+    setActiveQuestions(finalSelected)
+    setCurrentIndex(0)
+    setAnswers({})
+    setElapsedSeconds(0)
+    setShowReview(false)
+    setMode('running')
+  }
+
+  // Iniciar Quiz directo general o por materia
   const handleStartQuickQuiz = (subjectId = 'todos') => {
+    setTopicContext(null)
     let pool = QUESTIONS
     if (subjectId !== 'todos') {
       pool = QUESTIONS.filter((q) => q.subjectId === subjectId)
@@ -54,6 +86,15 @@ export default function Simulator() {
     setShowReview(false)
     setMode('running')
   }
+
+  // Sincronizar parámetros de ruta para inicio automático
+  useEffect(() => {
+    if (route.params.topic) {
+      handleStartTopicQuiz(route.params.topic, route.params.subject)
+    } else if (route.params.subject && route.params.auto === 'true') {
+      handleStartQuickQuiz(route.params.subject)
+    }
+  }, [route.params.topic, route.params.subject, route.params.auto])
 
   // Cronómetro suave
   useEffect(() => {
@@ -90,7 +131,9 @@ export default function Simulator() {
     const attempt = {
       id: `quiz-${Date.now()}`,
       type: 'quiz',
-      name: `Quiz de práctica (${activeQuestions.length} reactivos)`,
+      name: topicContext
+        ? `Quiz: ${topicContext.topicTitle} (${activeQuestions.length} reactivos)`
+        : `Quiz de práctica (${activeQuestions.length} reactivos)`,
       date: daysFromNow(0),
       correct: correctCount,
       total: activeQuestions.length,
@@ -122,6 +165,25 @@ export default function Simulator() {
             <p className="text-sm text-ink-300">
               Ponte a prueba con preguntas tipo examen. Es la forma más rápida de aprender.
             </p>
+          </div>
+
+          {/* Banner sugerido: Leer primero */}
+          <div
+            onClick={() => navigate('ruta')}
+            className="rounded-2xl border border-indigo-500/30 bg-indigo-500/10 p-4 flex items-center justify-between gap-3 cursor-pointer hover:border-indigo-500/50 hover:bg-indigo-500/15 transition"
+          >
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/20 text-indigo-300 shrink-0">
+                <BookOpen size={20} />
+              </span>
+              <div>
+                <p className="text-xs sm:text-sm font-bold text-white">¿Prefieres leer primero la explicación antes de contestar?</p>
+                <p className="text-[11px] text-slate-300">Entra a las materias para repasar los temas con calma antes del quiz.</p>
+              </div>
+            </div>
+            <span className="text-xs font-bold text-indigo-300 flex items-center gap-1 shrink-0">
+              Ir a Materias <ChevronRight size={14} />
+            </span>
           </div>
 
           {/* Opción 1: Test Rápido de 10 preguntas */}
@@ -183,13 +245,19 @@ export default function Simulator() {
         <div className="card p-6 sm:p-8 space-y-6 animate-fade-up">
           {/* Encabezado con número de pregunta y cronómetro */}
           <div className="flex items-center justify-between border-b border-white/8 pb-4">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="chip border-white/10 bg-white/5 text-ink-200 text-xs font-bold">
                 Pregunta {currentIndex + 1} de {activeQuestions.length}
               </span>
-              <span className="text-xs font-semibold" style={{ color: SUBJECT_MAP[currentQ.subjectId]?.color }}>
-                {SUBJECT_MAP[currentQ.subjectId]?.name}
-              </span>
+              {topicContext ? (
+                <span className="text-xs font-bold text-mint-300">
+                  🎯 Quiz de: {topicContext.topicTitle} ({SUBJECT_MAP[topicContext.subjectId]?.name})
+                </span>
+              ) : (
+                <span className="text-xs font-semibold" style={{ color: SUBJECT_MAP[currentQ.subjectId]?.color }}>
+                  {SUBJECT_MAP[currentQ.subjectId]?.name}
+                </span>
+              )}
             </div>
 
             <div className="flex items-center gap-2 text-xs font-mono font-bold text-ink-300">
@@ -312,7 +380,11 @@ export default function Simulator() {
             <div className="space-y-1">
               <h2 className="text-2xl font-extrabold text-white">¡Gran trabajo!</h2>
               <p className="text-xs sm:text-sm text-slate-300">
-                Cada quiz que haces te acerca más a tu objetivo en el examen <strong className="text-emerald-400">ECOEMS / COMIPEMS</strong>.
+                {topicContext ? (
+                  <>Has completado el quiz de repaso de <strong className="text-emerald-400">{topicContext.topicTitle}</strong>.</>
+                ) : (
+                  <>Cada quiz que haces te acerca más a tu objetivo en el examen <strong className="text-emerald-400">ECOEMS / COMIPEMS</strong>.</>
+                )}
               </p>
             </div>
 
@@ -343,13 +415,48 @@ export default function Simulator() {
             })()}
 
             <div className="flex flex-wrap justify-center gap-3 pt-2">
+              {topicContext && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate('ruta', {
+                      subject: topicContext.subjectId,
+                      topic: topicContext.topicId,
+                    })
+                  }
+                  className="btn btn-mint px-5 py-2.5 font-bold text-xs shadow-md shadow-mint-500/20"
+                >
+                  <BookOpen size={14} /> Volver a leer la lección
+                </button>
+              )}
+
+              {topicContext && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    actions.setTopicStatus(topicContext.topicId, 'dominado')
+                    toast({ tone: 'success', title: '¡Tema marcado como Dominado! 🌟' })
+                  }}
+                  className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/20 transition cursor-pointer"
+                >
+                  ✓ Marcar tema como ¡Dominado!
+                </button>
+              )}
+
               <button
                 type="button"
-                onClick={() => setMode('config')}
-                className="btn btn-mint px-6 py-2.5 font-bold text-xs"
+                onClick={() => {
+                  if (topicContext) {
+                    handleStartTopicQuiz(topicContext.topicId, topicContext.subjectId)
+                  } else {
+                    setMode('config')
+                  }
+                }}
+                className="btn btn-ghost px-5 py-2.5 font-bold text-xs"
               >
-                <RotateCcw size={14} /> Practicar de nuevo
+                <RotateCcw size={14} /> Repetir Quiz
               </button>
+
               <button
                 type="button"
                 onClick={() => navigate('inicio')}
@@ -357,6 +464,7 @@ export default function Simulator() {
               >
                 Volver a Mi Día
               </button>
+
               <button
                 type="button"
                 onClick={() => setShowReview(!showReview)}

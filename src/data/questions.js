@@ -364,6 +364,111 @@ export const QUESTIONS = [
     explanation:
       'En la mediación el tercero solo facilita la comunicación. En el arbitraje (y en un juicio) el tercero sí decide la solución.',
   },
+
+  // ───────────── Preguntas de refuerzo para cobertura total de temas ─────────────
+  {
+    id: 'q-mat-7',
+    subjectId: 'matematicas',
+    topicId: 'mat-5',
+    difficulty: 2,
+    question: md`¿Cuáles son las soluciones de la ecuación cuadrática $x^2 - 25 = 0$?`,
+    options: [md`$x = 5$ solamente`, md`$x = -5$ solamente`, md`$x = 5$ y $x = -5$`, md`$x = 0$ y $x = 25$`],
+    answer: 2,
+    explanation: md`Despejando: $x^2 = 25 \Rightarrow x = \pm \sqrt{25} = \pm 5$. Toda raíz cuadrada en ecuaciones de segundo grado genera dos soluciones: una positiva y una negativa.`,
+  },
+  {
+    id: 'q-esp-5',
+    subjectId: 'espanol',
+    topicId: 'esp-2',
+    difficulty: 1,
+    question: 'En la oración «El automóvil rojo avanzó rápidamente por la carretera», la palabra «rápidamente» funciona como:',
+    options: ['Sustantivo', 'Adjetivo', 'Adverbio de modo', 'Preposición'],
+    answer: 2,
+    explanation:
+      '«Rápidamente» modifica al verbo «avanzó» indicando cómo ocurrió la acción, por lo tanto es un adverbio de modo (la mayoría de palabras con terminación -mente son adverbios).',
+  },
+  {
+    id: 'q-qui-5',
+    subjectId: 'quimica',
+    topicId: 'qui-1',
+    difficulty: 1,
+    question: 'El paso directo del estado sólido al gaseoso sin pasar por el líquido se conoce como:',
+    options: ['Evaporación', 'Sublimación', 'Condensación', 'Fusión'],
+    answer: 1,
+    explanation:
+      'La sublimación es el cambio de fase directo de sólido a gas (ejemplo: el hielo seco o las pastillas de naftalina).',
+  },
+  {
+    id: 'q-bio-4',
+    subjectId: 'biologia',
+    topicId: 'bio-2',
+    difficulty: 1,
+    question: '¿Qué órgano del cuerpo humano es el principal responsable de la absorción de los nutrientes durante la digestión?',
+    options: ['Estómago', 'Intestino delgado', 'Hígado', 'Intestino grueso'],
+    answer: 1,
+    explanation:
+      'El intestino delgado (a través de sus microvellosidades) absorbe la mayor parte de carbohidratos, lípidos, proteínas y vitaminas hacia el torrente sanguíneo.',
+  },
+  {
+    id: 'q-bio-5',
+    subjectId: 'biologia',
+    topicId: 'bio-5',
+    difficulty: 1,
+    question: 'En una cadena trófica, los organismos fotosintéticos como las plantas ocupan el nivel de:',
+    options: ['Consumidores primarios', 'Productores', 'Consumidores secundarios', 'Descomponedores'],
+    answer: 1,
+    explanation:
+      'Las plantas y algas son productores porque fabrican su propia materia orgánica a partir de la luz solar (organismos autótrofos).',
+  },
+  {
+    id: 'q-his-4',
+    subjectId: 'historia',
+    topicId: 'his-2',
+    difficulty: 1,
+    question: '¿En qué año ocurrió la caída de México-Tenochtitlan a manos de Hernán Cortés y sus aliados indígenas?',
+    options: ['1492', '1510', '1521', '1810'],
+    answer: 2,
+    explanation:
+      'El 13 de agosto de 1521 cayó Tenochtitlan, dando inicio al periodo virreinal de la Nueva España (que duró exactamente 300 años hasta 1821).',
+  },
+  {
+    id: 'q-his-5',
+    subjectId: 'historia',
+    topicId: 'his-5',
+    difficulty: 2,
+    question: '¿Qué acontecimiento detonó el inicio de la Primera Guerra Mundial en 1914?',
+    options: [
+      'La invasión de Polonia por Alemania',
+      'El asesinato del archiduque Francisco Fernando en Sarajevo',
+      'El bombardeo de Pearl Harbor',
+      'La caída del Muro de Berlín',
+    ],
+    answer: 1,
+    explanation:
+      'El asesinato del heredero al trono austrohúngaro en Sarajevo desató el sistema de alianzas que inició la Primera Guerra Mundial. La invasión de Polonia inició la Segunda Guerra en 1939.',
+  },
+  {
+    id: 'q-geo-4',
+    subjectId: 'geografia',
+    topicId: 'geo-3',
+    difficulty: 1,
+    question: 'La salida de personas de su lugar de origen para establecerse en otra región o país se denomina:',
+    options: ['Inmigración', 'Emigración', 'Crecimiento natural', 'Densidad de población'],
+    answer: 1,
+    explanation:
+      'Emigración es salir de un lugar de origen; inmigración es llegar al lugar de destino.',
+  },
+  {
+    id: 'q-civ-4',
+    subjectId: 'civica',
+    topicId: 'civ-3',
+    difficulty: 1,
+    question: 'La capacidad de las personas para tomar decisiones responsables según sus propios principios éticos y valores se llama:',
+    options: ['Heteronomía', 'Autonomía moral', 'Presión social', 'Imposición'],
+    answer: 1,
+    explanation:
+      'La autonomía moral consiste en gobernarse a uno mismo y decidir con responsabilidad sin dejarse llevar ciegamente por lo que dicen los demás.',
+  },
 ]
 
 export const QUESTION_MAP = Object.fromEntries(QUESTIONS.map((q) => [q.id, q]))

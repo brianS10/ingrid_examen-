@@ -23,8 +23,8 @@ export const TUTOR_NAV_ITEMS = [
 
 export const STUDENT_NAV_ITEMS = [
   { id: 'inicio', label: 'Mi Día', icon: Home },
-  { id: 'ruta', label: 'Materias', icon: BookOpen },
-  { id: 'simulador', label: 'Practicar', icon: Zap },
+  { id: 'ruta', label: 'Temas y Lecturas', icon: BookOpen },
+  { id: 'simulador', label: 'Hacer Quizzes', icon: Zap },
   { id: 'tareas', label: 'Mis Tareas', icon: CheckSquare },
   { id: 'estadisticas', label: 'Progreso', icon: Award },
 ]
