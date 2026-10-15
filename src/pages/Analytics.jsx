@@ -90,10 +90,10 @@ export default function Analytics() {
             <Target size={15} /> Meta ECOEMS / COMIPEMS
           </p>
           <p className="mt-2 text-xl font-black text-white tabular-nums">
-            {lastSim ? `${lastSim.correct} / 128` : '0 / 128'}
+            {state.profile.goalScore} / 128
           </p>
           <p className="text-xs text-slate-400 mt-1">
-            Objetivo: {state.profile.goalScore} aciertos ({state.profile.targetSchool})
+            Meta de aciertos ({state.profile.targetSchool})
           </p>
         </div>
 
@@ -161,13 +161,13 @@ export default function Analytics() {
           <div>
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="section-title">Evolución de Aciertos</h3>
+                <h3 className="section-title">Evolución de Rendimiento (%)</h3>
                 <p className="text-xs text-slate-400 mt-1">
-                  Historial de puntajes en cuestionarios y simulacros oficiales.
+                  Historial de precisión en cada cuestionario y simulacro realizado.
                 </p>
               </div>
               <span className="chip border-indigo-400/30 bg-indigo-500/10 text-indigo-300 text-xs font-bold">
-                Meta: {state.profile.goalScore} aciertos
+                Meta: {Math.round((state.profile.goalScore / 128) * 100)}% ({state.profile.goalScore} aciertos)
               </span>
             </div>
 
@@ -194,7 +194,7 @@ export default function Analytics() {
                   <BarChart data={historyData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.05)" />
                     <XAxis dataKey="name" tick={{ fill: '#8d9acb', fontSize: 11 }} />
-                    <YAxis domain={[0, 128]} tick={{ fill: '#8d9acb', fontSize: 11 }} />
+                    <YAxis domain={[0, 100]} tick={{ fill: '#8d9acb', fontSize: 11 }} unit="%" />
                     <Tooltip
                       content={({ active, payload }) => {
                         if (active && payload && payload.length) {
@@ -204,7 +204,7 @@ export default function Analytics() {
                               <p className="font-bold text-white">{d.fullName}</p>
                               <p className="text-slate-400">{d.date}</p>
                               <p className="mt-1 font-bold text-emerald-400">
-                                {d.aciertos} / {d.total} aciertos ({d.porcentaje}%)
+                                {d.aciertos} de {d.total} aciertos ({d.porcentaje}%)
                               </p>
                             </div>
                           )
@@ -212,7 +212,7 @@ export default function Analytics() {
                         return null
                       }}
                     />
-                    <Bar dataKey="aciertos" fill="#6366f1" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="porcentaje" fill="#6366f1" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

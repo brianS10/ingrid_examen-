@@ -16,14 +16,14 @@ import { useApp } from '../context/AppContext'
 import { SUBJECTS, SUBJECT_MAP, ALL_TOPICS } from '../data/subjects'
 import { TASK_CATALOG, DIFFICULTY_CONFIG } from '../data/taskCatalog'
 import { globalProgress, subjectProgress, masteryBySubject } from '../lib/progress'
-import { daysFromNow, daysUntil, formatDate } from '../lib/date'
+import { daysFromNow, daysUntil, formatDate, toDateKey } from '../lib/date'
 import { Modal } from '../components/ui/Modal'
 import { SubjectIcon } from '../components/ui/Icon'
 import { ProgressBar } from '../components/ui/Progress'
 
 export default function TutorDashboard() {
   const { state, actions, toast, navigate } = useApp()
-  const [activeTab, setActiveTab] = useState('catalogo') // 'catalogo' | 'asignadas' | 'progreso'
+  const [activeTab, setActiveTab] = useState('catalogo') // 'catalogo' | 'crear' | 'asignadas'
   const [catalogSubject, setCatalogSubject] = useState('todas')
   const [catalogDifficulty, setCatalogDifficulty] = useState('todas')
 
@@ -31,6 +31,14 @@ export default function TutorDashboard() {
   const [selectedCatalogTask, setSelectedCatalogTask] = useState(null)
   const [customDays, setCustomDays] = useState(3)
   const [customPoints, setCustomPoints] = useState(25)
+
+  // Formulario para crear tarea personalizada
+  const [customTitle, setCustomTitle] = useState('')
+  const [customDesc, setCustomDesc] = useState('')
+  const [customSub, setCustomSub] = useState('matematicas')
+  const [customDiff, setCustomDiff] = useState('medio')
+  const [customNewDays, setCustomNewDays] = useState(3)
+  const [customNewPoints, setCustomNewPoints] = useState(25)
 
   // Modal para revisar entrega
   const [reviewingTask, setReviewingTask] = useState(null)
@@ -76,6 +84,34 @@ export default function TutorDashboard() {
     })
   }
 
+  // Crear y asignar tarea personalizada desde cero
+  const handleCreateCustomTask = (e) => {
+    e.preventDefault()
+    if (!customTitle.trim()) {
+      toast({ tone: 'warning', title: 'Por favor escribe un título para la tarea' })
+      return
+    }
+
+    actions.addTask({
+      title: customTitle.trim(),
+      description: customDesc.trim() || 'Resolver los ejercicios en tu libreta y adjuntar foto.',
+      subjectId: customSub,
+      difficulty: customDiff,
+      type: 'tarea',
+      points: Number(customNewPoints),
+      dueDate: daysFromNow(Number(customNewDays)),
+    })
+
+    setCustomTitle('')
+    setCustomDesc('')
+    setActiveTab('asignadas')
+    toast({
+      tone: 'success',
+      title: '¡Tarea asignada con éxito! 🚀',
+      description: `"${customTitle}" ya le aparece a Ingrid.`,
+    })
+  }
+
   // Guardar calificación
   const handleSaveReview = () => {
     if (!reviewingTask) return
@@ -85,6 +121,7 @@ export default function TutorDashboard() {
       review: {
         grade: Number(reviewGrade),
         feedback: reviewComment,
+        reviewedAt: toDateKey(),
       },
     })
 
@@ -187,23 +224,34 @@ export default function TutorDashboard() {
         </section>
       )}
 
-      {/* ───────── 3. PESTAÑAS: CATÁLOGO vs TAREAS ASIGNADAS ───────── */}
-      <div className="flex gap-2 border-b border-white/8 pb-2">
+      {/* ───────── 3. PESTAÑAS: CATÁLOGO vs REDACTAR vs TAREAS ASIGNADAS ───────── */}
+      <div className="flex gap-2 border-b border-white/8 pb-2 overflow-x-auto no-scrollbar">
         <button
           type="button"
           onClick={() => setActiveTab('catalogo')}
-          className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-xl transition cursor-pointer ${
+          className={`px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl transition cursor-pointer shrink-0 ${
             activeTab === 'catalogo'
               ? 'bg-iris-500 text-white'
               : 'text-ink-300 hover:text-white hover:bg-white/5'
           }`}
         >
-          📚 Banco de Tareas ECOEMS (Listas para Asignar)
+          📚 Banco de Tareas ECOEMS ({TASK_CATALOG.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('crear')}
+          className={`px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl transition cursor-pointer shrink-0 ${
+            activeTab === 'crear'
+              ? 'bg-iris-500 text-white'
+              : 'text-ink-300 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          ✏️ Redactar Tarea Nueva
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('asignadas')}
-          className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-xl transition cursor-pointer ${
+          className={`px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl transition cursor-pointer shrink-0 ${
             activeTab === 'asignadas'
               ? 'bg-iris-500 text-white'
               : 'text-ink-300 hover:text-white hover:bg-white/5'
@@ -341,7 +389,119 @@ export default function TutorDashboard() {
         </section>
       )}
 
-      {/* ───────── PESTAÑA B: TAREAS ASIGNADAS ───────── */}
+      {/* ───────── PESTAÑA B: CREAR TAREA PERSONALIZADA ───────── */}
+      {activeTab === 'crear' && (
+        <section className="space-y-4 animate-fade-up">
+          <div className="card p-5 sm:p-6 space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-white flex items-center gap-2">
+                <Plus size={18} className="text-mint-400" /> Redactar Tarea o Reto Personalizado
+              </h2>
+              <p className="text-xs text-slate-300 mt-1">
+                Asígnale a Ingrid una tarea específica (ej. páginas del libro, ejercicios en WhatsApp o dudas de su libreta).
+              </p>
+            </div>
+
+            <form onSubmit={handleCreateCustomTask} className="space-y-4">
+              <div>
+                <label className="label">Título de la actividad *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej. Resolver páginas 45 a 47 del libro de Matemáticas"
+                  className="input"
+                  value={customTitle}
+                  onChange={(e) => setCustomTitle(e.target.value)}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="label">Materia</label>
+                  <select
+                    className="input bg-slate-950 text-white"
+                    value={customSub}
+                    onChange={(e) => setCustomSub(e.target.value)}
+                  >
+                    {SUBJECTS.map((s) => (
+                      <option key={s.id} value={s.id} className="bg-slate-900 text-white">
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="label">
+                    Nivel de dificultad <span className="text-amber-400 font-normal lowercase">(solo tú lo verás)</span>
+                  </label>
+                  <select
+                    className="input bg-slate-950 text-white"
+                    value={customDiff}
+                    onChange={(e) => setCustomDiff(e.target.value)}
+                  >
+                    <option value="facil" className="bg-slate-900 text-white">Fácil (Conceptos base)</option>
+                    <option value="medio" className="bg-slate-900 text-white">Medio (Fórmulas y práctica)</option>
+                    <option value="dificil" className="bg-slate-900 text-white">Difícil (Complejo tipo examen)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="label">Instrucciones detalladas</label>
+                <textarea
+                  rows={3}
+                  placeholder="Ej. Resuelve los 10 ejercicios con procedimiento a mano en tu libreta. Toma foto con buena luz al terminar."
+                  className="input"
+                  value={customDesc}
+                  onChange={(e) => setCustomDesc(e.target.value)}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="label">Días para entregar</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="14"
+                    className="input"
+                    value={customNewDays}
+                    onChange={(e) => setCustomNewDays(e.target.value)}
+                  />
+                  <span className="text-[11px] text-slate-400 mt-1 block">
+                    Vence el {formatDate(daysFromNow(Number(customNewDays)))}
+                  </span>
+                </div>
+
+                <div>
+                  <label className="label">Puntos que suma</label>
+                  <input
+                    type="number"
+                    min="10"
+                    max="50"
+                    step="5"
+                    className="input"
+                    value={customNewPoints}
+                    onChange={(e) => setCustomNewPoints(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="submit"
+                  className="btn btn-mint font-bold px-6 py-2.5 text-xs shadow-lg shadow-mint-500/20"
+                >
+                  ✓ Asignar esta tarea a Ingrid
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+      )}
+
+      {/* ───────── PESTAÑA C: TAREAS ASIGNADAS ───────── */}
       {activeTab === 'asignadas' && (
         <section className="space-y-3 animate-fade-up">
           {assignedTasks.map((t) => {
@@ -517,6 +677,14 @@ export default function TutorDashboard() {
         }
       >
         <div className="space-y-4 text-xs sm:text-sm">
+          {/* Instrucciones originales de la tarea */}
+          {reviewingTask?.description && (
+            <div className="card bg-ink-950/60 p-4 border border-white/8 space-y-1">
+              <p className="text-[11px] font-bold text-slate-400 uppercase">Instrucciones que le diste a Ingrid:</p>
+              <p className="text-slate-200 text-xs leading-relaxed">{reviewingTask.description}</p>
+            </div>
+          )}
+
           {/* Evidencia escrita */}
           <div className="card bg-ink-950/60 p-4 border border-white/8 space-y-1.5">
             <p className="font-bold text-mint-300">Notas de Ingrid:</p>

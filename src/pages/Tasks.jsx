@@ -40,6 +40,15 @@ export default function Tasks() {
   const [customDays, setCustomDays] = useState(3)
   const [customPoints, setCustomPoints] = useState(25)
 
+  // Modal para crear tarea personalizada (Brian)
+  const [isCustomOpen, setIsCustomOpen] = useState(false)
+  const [newTitle, setNewTitle] = useState('')
+  const [newDesc, setNewDesc] = useState('')
+  const [newSub, setNewSub] = useState('matematicas')
+  const [newDiff, setNewDiff] = useState('medio')
+  const [newDays, setNewDays] = useState(3)
+  const [newPoints, setNewPoints] = useState(25)
+
   // Visor de foto de libreta en pantalla completa
   const [previewPhoto, setPreviewPhoto] = useState(null)
 
@@ -176,6 +185,34 @@ export default function Tasks() {
     })
   }
 
+  // 4. Crear tarea personalizada desde cero para Brian
+  const handleCreateCustomTask = (e) => {
+    e.preventDefault()
+    if (!newTitle.trim()) {
+      toast({ tone: 'warning', title: 'Escribe un título para la tarea' })
+      return
+    }
+
+    actions.addTask({
+      title: newTitle.trim(),
+      description: newDesc.trim() || 'Resolver los ejercicios en tu libreta y adjuntar foto.',
+      subjectId: newSub,
+      difficulty: newDiff,
+      type: 'tarea',
+      points: Number(newPoints),
+      dueDate: daysFromNow(Number(newDays)),
+    })
+
+    setIsCustomOpen(false)
+    setNewTitle('')
+    setNewDesc('')
+    toast({
+      tone: 'success',
+      title: '¡Tarea personalizada asignada! 🚀',
+      description: `"${newTitle}" ya está en la lista de Ingrid.`,
+    })
+  }
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* ───────── ENCABEZADO PRINCIPAL ───────── */}
@@ -191,15 +228,25 @@ export default function Tasks() {
           </p>
         </div>
 
-        {/* Botón para que Brian asigne tareas del catálogo */}
+        {/* Botones para que Brian asigne tareas */}
         {isTutor && (
-          <button
-            type="button"
-            onClick={() => setIsCatalogOpen(true)}
-            className="flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-600/20 transition cursor-pointer shrink-0"
-          >
-            <Plus size={16} /> + Asignar del Catálogo ECOEMS
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setIsCustomOpen(true)}
+              className="flex items-center gap-1.5 rounded-xl border border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500/20 px-3.5 py-2.5 text-xs font-bold text-indigo-300 transition cursor-pointer shrink-0"
+            >
+              <Plus size={15} /> Redactar Tarea
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsCatalogOpen(true)}
+              className="flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-600/20 transition cursor-pointer shrink-0"
+            >
+              <Plus size={16} /> + Banco ECOEMS ({TASK_CATALOG.length})
+            </button>
+          </div>
         )}
       </div>
 
@@ -586,6 +633,14 @@ export default function Tasks() {
         }
       >
         <div className="space-y-4 text-xs sm:text-sm">
+          {/* Instrucciones originales de la tarea */}
+          {reviewTask?.description && (
+            <div className="rounded-xl bg-slate-950 p-3 border border-slate-800 space-y-1">
+              <p className="text-[11px] font-bold text-slate-400 uppercase">Instrucciones que le diste a Ingrid:</p>
+              <p className="text-slate-200 text-xs leading-relaxed">{reviewTask.description}</p>
+            </div>
+          )}
+
           {/* Muestra foto de libreta si existe */}
           {reviewTask?.evidence?.photo && (
             <div className="space-y-1.5">
@@ -800,6 +855,117 @@ export default function Tasks() {
             </div>
           )}
         </div>
+      </Modal>
+
+      {/* ───────────────── MODAL: CREAR TAREA PERSONALIZADA (BRIAN) ───────────────── */}
+      <Modal
+        open={isCustomOpen}
+        onClose={() => setIsCustomOpen(false)}
+        title="Redactar Tarea Personalizada"
+        subtitle="Asigna una actividad libre a Ingrid con fecha de entrega y puntos"
+      >
+        <form onSubmit={handleCreateCustomTask} className="space-y-4 text-xs sm:text-sm">
+          <div>
+            <label className="label">Título de la actividad *</label>
+            <input
+              type="text"
+              required
+              placeholder="Ej. Resolver ejercicios 1 al 10 de la guía impresa"
+              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="label">Materia</label>
+              <select
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                value={newSub}
+                onChange={(e) => setNewSub(e.target.value)}
+              >
+                {SUBJECTS.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="label">
+                Nivel <span className="text-amber-400 font-normal lowercase">(solo tú lo ves)</span>
+              </label>
+              <select
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                value={newDiff}
+                onChange={(e) => setNewDiff(e.target.value)}
+              >
+                <option value="facil">Fácil</option>
+                <option value="medio">Medio</option>
+                <option value="dificil">Difícil</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="label">Instrucciones</label>
+            <textarea
+              rows={3}
+              placeholder="Ej. Realizar en libreta a mano con procedimiento claro y subir foto de la página."
+              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+              value={newDesc}
+              onChange={(e) => setNewDesc(e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label">Días de plazo</label>
+              <input
+                type="number"
+                min="1"
+                max="14"
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white text-center font-bold"
+                value={newDays}
+                onChange={(e) => setNewDays(e.target.value)}
+              />
+              <span className="text-[11px] text-slate-400 mt-1 block">
+                Vence el {formatDate(daysFromNow(Number(newDays)))}
+              </span>
+            </div>
+
+            <div>
+              <label className="label">Puntos</label>
+              <input
+                type="number"
+                min="10"
+                max="50"
+                step="5"
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white text-center font-bold"
+                value={newPoints}
+                onChange={(e) => setNewPoints(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="pt-2 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setIsCustomOpen(false)}
+              className="rounded-xl border border-slate-700 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="rounded-xl bg-indigo-600 hover:bg-indigo-500 px-5 py-2 text-xs font-bold text-white shadow-md shadow-indigo-600/20 cursor-pointer"
+            >
+              ✓ Asignar Tarea
+            </button>
+          </div>
+        </form>
       </Modal>
 
       {/* ───────────────── VISOR DE FOTO EN PANTALLA COMPLETA ───────────────── */}

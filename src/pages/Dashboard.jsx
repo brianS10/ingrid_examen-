@@ -9,7 +9,7 @@
 import { useMemo } from 'react'
 import {
   ArrowRight, BookOpen, Calendar, CheckCircle2, ChevronRight,
-  Clock, Flame, Play, Quote, Sparkles, Trophy, Zap
+  Clock, Flame, Play, Quote, Sparkles, Star, Trophy, Zap
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { SUBJECTS, SUBJECT_MAP } from '../data/subjects'
@@ -28,6 +28,7 @@ export default function Dashboard() {
   const name = state.profile.student
 
   const pendingTasks = state.tasks.filter((t) => t.status === 'pendiente')
+  const reviewedTasks = state.tasks.filter((t) => t.status === 'revisada')
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -142,6 +143,42 @@ export default function Dashboard() {
           })}
         </div>
       </section>
+
+      {/* ───────── NOTIFICACIÓN DE TAREA REVISADA POR BRIAN ───────── */}
+      {!isTutor && reviewedTasks.length > 0 && (
+        <section
+          onClick={() => navigate('tareas')}
+          className="card p-4.5 border-emerald-500/30 bg-emerald-500/10 hover:border-emerald-500/50 transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg"
+        >
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-slate-950 font-black shadow-md shadow-emerald-500/20">
+              <Star size={18} fill="currentColor" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+                <CheckCircle2 size={13} /> ¡{state.profile.tutor} revisó tu tarea!
+              </p>
+              <h3 className="text-sm font-bold text-white truncate">
+                {reviewedTasks[0].title}
+              </h3>
+              {reviewedTasks[0].review?.feedback && (
+                <p className="text-xs text-slate-300 italic truncate mt-0.5">
+                  “{reviewedTasks[0].review.feedback}”
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 justify-end">
+            <span className="rounded-lg bg-emerald-500/20 px-2.5 py-1 text-xs font-black text-emerald-300 border border-emerald-500/30">
+              Nota: {reviewedTasks[0].review?.grade}/10
+            </span>
+            <span className="text-xs font-bold text-emerald-400 flex items-center">
+              Ver libreta <ChevronRight size={14} />
+            </span>
+          </div>
+        </section>
+      )}
 
       {/* ───────── 3. TAREAS Y RETOS PENDIENTES ───────── */}
       <section className="card p-5 space-y-3">

@@ -46,6 +46,10 @@ function loadState() {
       ...saved,
       profile: { ...base.profile, ...saved.profile },
       currentUser: saved.currentUser ?? null,
+      tasks: (saved.tasks || base.tasks).map((t) => ({
+        ...t,
+        difficulty: t.difficulty || 'medio',
+      })),
     }
   } catch {
     return createInitialState()

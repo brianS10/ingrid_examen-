@@ -317,15 +317,30 @@ export default function Simulator() {
             </div>
 
             {/* Puntaje destacado */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 max-w-sm mx-auto">
-              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Aciertos logrados</p>
-              <p className="text-4xl font-black text-emerald-400 mt-1 tabular-nums">
-                {activeQuestions.filter((q) => answers[q.id] === q.answer).length} / {activeQuestions.length}
-              </p>
-              <p className="text-xs text-slate-400 mt-1">
-                Tiempo invertido: {formatDuration(elapsedSeconds)}
-              </p>
-            </div>
+            {(() => {
+              const correct = activeQuestions.filter((q) => answers[q.id] === q.answer).length
+              const total = activeQuestions.length
+              const scorePct = total > 0 ? Math.round((correct / total) * 100) : 0
+              return (
+                <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 max-w-sm mx-auto space-y-2">
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Aciertos logrados</p>
+                  <div className="flex items-center justify-center gap-3">
+                    <p className="text-4xl font-black text-emerald-400 tabular-nums">
+                      {correct} / {total}
+                    </p>
+                    <span className="rounded-xl bg-emerald-500/20 px-3 py-1 text-sm font-black text-emerald-300 border border-emerald-500/30">
+                      {scorePct}%
+                    </span>
+                  </div>
+                  <p className="text-xs font-semibold text-slate-300">
+                    {scorePct >= 80 ? '🌟 ¡Excelente dominio de los temas!' : scorePct >= 60 ? '💪 ¡Buen trabajo! Con práctica dominarás el 100%.' : '💡 Buen intento. Revisa la explicación de cada pregunta abajo.'}
+                  </p>
+                  <p className="text-[11px] text-slate-400 pt-1 border-t border-slate-800/80">
+                    Tiempo invertido: {formatDuration(elapsedSeconds)}
+                  </p>
+                </div>
+              )
+            })()}
 
             <div className="flex flex-wrap justify-center gap-3 pt-2">
               <button
