@@ -1,19 +1,22 @@
 /**
- * Ruta de Aprendizaje y Estudio de Temas:
- * - Flujo pedagógico claro: LEER PRIMERO, LUEGO EVALUAR CON QUIZ.
- * - Modo Lista: Cada tema muestra botón para "📖 Leer explicación" y botón "⚡ Hacer Quiz" si ya lo dominan.
- * - Modo Lectura: Vista completa y cómoda (sin drawers apretados) con fórmulas KaTeX, consejos del tutor,
- *   checklist de subtemas, notas personales y botón final: "⚡ ¡Hacer Quiz de este tema ahora!".
+ * Aula de Clases Interactivas ECOEMS:
+ * Estructura pedagógica guiada en 4 Pasos:
+ *  - Paso 1: 🎓 La Clase (Explicación clara en lenguaje sencillo + Consejo de Brian + Checklist)
+ *  - Paso 2: 💡 Ejemplos Resueltos (Paso a paso cómo viene en el examen)
+ *  - Paso 3: 🗂️ Tarjetas de Memoria (Flashcards interactivas del tema)
+ *  - Paso 4: 🎯 Quiz del Tema (Evaluación directa con retroalimentación)
  */
 import { useEffect, useMemo, useState } from 'react'
 import {
-  ArrowLeft, ArrowRight, BookOpen, Check, CheckCircle2, ChevronRight,
-  Circle, Clock, Edit3, Lightbulb, NotebookPen, Pencil, Play,
-  RotateCcw, Sparkles, Trophy, X, Zap
+  ArrowLeft, ArrowRight, Award, BookOpen, Check, CheckCircle2, ChevronRight,
+  Circle, Clock, Edit3, HelpCircle, Layers, Lightbulb, NotebookPen, Pencil,
+  Play, RefreshCw, RotateCcw, Sparkles, Star, Trophy, X, Zap
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
-import { SUBJECTS, SUBJECT_MAP, TOPIC_STATUS } from '../data/subjects'
+import { SUBJECTS, SUBJECT_MAP } from '../data/subjects'
 import { getSubjectTopics, getTopic, subjectProgress } from '../lib/progress'
+import { getTopicExamples } from '../data/topicExamples'
+import { FLASHCARD_DECKS } from '../data/flashcardsData'
 import { ProgressBar } from '../components/ui/Progress'
 import { SubjectIcon } from '../components/ui/Icon'
 import { RichText } from '../components/ui/RichText'
@@ -24,10 +27,20 @@ export default function LearningRoute() {
   const [selectedSubjectId, setSelectedSubjectId] = useState(initialSubject)
   const [activeTopicId, setActiveTopicId] = useState(route.params.topic || null)
 
+  // Paso activo dentro de la clase: 1 = Clase, 2 = Ejemplos, 3 = Tarjetas, 4 = Quiz
+  const [classStep, setClassStep] = useState(1)
+
+  // Estado para voltear tarjetas dentro de la clase
+  const [activeCardIndex, setActiveCardIndex] = useState(0)
+  const [cardFlipped, setCardFlipped] = useState(false)
+
   // Sincronizar parámetros de ruta
   useEffect(() => {
     if (route.params.subject) setSelectedSubjectId(route.params.subject)
-    if (route.params.topic) setActiveTopicId(route.params.topic)
+    if (route.params.topic) {
+      setActiveTopicId(route.params.topic)
+      setClassStep(1)
+    }
   }, [route.params.subject, route.params.topic])
 
   const currentSubject = SUBJECT_MAP[selectedSubjectId] || SUBJECTS[0]
@@ -39,8 +52,19 @@ export default function LearningRoute() {
     return subjectProgress(state, currentSubject.id)
   }, [state, currentSubject.id])
 
-  // Tema activo actualmente abierto para lectura
+  // Tema activo actualmente abierto para la clase
   const activeTopic = activeTopicId ? getTopic(state, activeTopicId) : null
+
+  // Ejemplos resueltos para este tema
+  const examples = useMemo(() => {
+    return activeTopic ? getTopicExamples(activeTopic.id, currentSubject.id) : []
+  }, [activeTopic, currentSubject.id])
+
+  // Flashcards para este tema / materia
+  const topicCards = useMemo(() => {
+    const deck = FLASHCARD_DECKS.find((d) => d.subjectId === currentSubject.id)
+    return deck ? deck.cards : []
+  }, [currentSubject.id])
 
   // Estado para notas personales y edición de consejos del tutor
   const [personalNotes, setPersonalNotes] = useState(activeTopic?.notes ?? '')
@@ -52,6 +76,8 @@ export default function LearningRoute() {
       setPersonalNotes(activeTopic.notes ?? '')
       setTipDraft(activeTopic.tip ?? '')
       setIsEditingTip(false)
+      setActiveCardIndex(0)
+      setCardFlipped(false)
     }
   }, [activeTopicId])
 
@@ -64,7 +90,7 @@ export default function LearningRoute() {
     return () => clearTimeout(timer)
   }, [personalNotes, activeTopic, actions])
 
-  // Calcular tema anterior y siguiente en la materia
+  // Tema anterior y siguiente
   const { prevTopic, nextTopic } = useMemo(() => {
     if (!activeTopic) return { prevTopic: null, nextTopic: null }
     const index = topics.findIndex((t) => t.id === activeTopic.id)
@@ -75,7 +101,7 @@ export default function LearningRoute() {
   }, [topics, activeTopic])
 
   /* ─────────────────────────────────────────────────────────────
-     VISTA 1: LECTURA Y ESTUDIO COMPLETO DE UN TEMA (LECCIÓN)
+     VISTA 1: AULA DE CLASE INTERACTIVA (LECCIÓN GUIADA EN 4 PASOS)
   ───────────────────────────────────────────────────────────── */
   if (activeTopic) {
     const isMastered = activeTopic.status === 'dominado'
@@ -83,21 +109,20 @@ export default function LearningRoute() {
 
     return (
       <div className="space-y-6 max-w-4xl mx-auto animate-fade-up">
-        {/* Barra de navegación superior de la lección */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/8 pb-4">
+        {/* Barra superior de regreso y acciones */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
           <button
             type="button"
             onClick={() => {
               setActiveTopicId(null)
               navigate('ruta', { subject: currentSubject.id })
             }}
-            className="flex items-center gap-2 text-xs font-bold text-slate-300 hover:text-white transition cursor-pointer"
+            className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-900 transition cursor-pointer"
           >
-            <ArrowLeft size={16} /> Volver a temas de {currentSubject.name}
+            <ArrowLeft size={16} /> Volver al temario de {currentSubject.name}
           </button>
 
-          <div className="flex items-center gap-2.5 flex-wrap">
-            {/* Toggle de estado rápido */}
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               type="button"
               onClick={() => {
@@ -110,14 +135,14 @@ export default function LearningRoute() {
               }}
               className={`rounded-xl px-3 py-1.5 text-xs font-bold transition cursor-pointer border ${
                 isMastered
-                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                  : 'border-slate-700 bg-slate-800 text-slate-300 hover:text-white'
+                  ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
+                  : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
               }`}
             >
-              {isMastered ? '✓ Tema Dominado' : 'Marcar como Dominado'}
+              {isMastered ? '✓ Clase Dominada' : 'Marcar como Dominada'}
             </button>
 
-            {/* Botón directo a Quiz */}
+            {/* Acceso directo a Quiz si ya se lo saben */}
             <button
               type="button"
               onClick={() =>
@@ -127,222 +152,503 @@ export default function LearningRoute() {
                   auto: 'true',
                 })
               }
-              className="flex items-center gap-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-3.5 py-1.5 text-xs shadow-md shadow-amber-400/20 transition cursor-pointer"
+              className="flex items-center gap-1.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black px-3.5 py-1.5 text-xs shadow-sm transition cursor-pointer"
             >
-              <Zap size={14} fill="currentColor" /> Hacer Quiz de este tema
+              <Zap size={14} fill="currentColor" /> Hacer Quiz ahora
             </button>
           </div>
         </div>
 
-        {/* Encabezado del tema */}
+        {/* Encabezado del Tema */}
         <div
-          className="card p-6 sm:p-8 space-y-3 border"
+          className="rounded-3xl border p-6 sm:p-8 space-y-3 bg-white shadow-sm"
           style={{
             borderColor: `${currentSubject.color}40`,
-            backgroundImage: `linear-gradient(135deg, ${currentSubject.color}15, transparent 65%)`,
+            backgroundImage: `linear-gradient(135deg, ${currentSubject.color}08, #ffffff 70%)`,
           }}
         >
           <div className="flex items-center gap-2 flex-wrap">
             <span
-              className="rounded-lg px-2.5 py-0.5 text-xs font-black"
-              style={{ background: `${currentSubject.color}25`, color: currentSubject.color }}
+              className="rounded-full px-3 py-1 text-xs font-black"
+              style={{ background: `${currentSubject.color}18`, color: currentSubject.color }}
             >
               {currentSubject.name}
             </span>
-            <span className="text-xs text-slate-400 font-semibold flex items-center gap-1">
-              <Clock size={13} className="text-mint-400" /> ~{activeTopic.minutes} min de lectura y práctica
+            <span className="text-xs text-slate-500 font-semibold flex items-center gap-1">
+              <Clock size={13} className="text-indigo-600" /> ~{activeTopic.minutes} min de clase
             </span>
-            <span className="text-xs text-slate-400 font-semibold">
-              • {doneSubs} de {activeTopic.subtopics.length} partes dominadas
+            <span className="text-xs text-slate-500 font-semibold">
+              • {doneSubs} de {activeTopic.subtopics.length} puntos entendidos
             </span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
             {activeTopic.title}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-300">
-            Lee con atención la explicación, repasa las fórmulas y conceptos clave, y al terminar pon a prueba tus conocimientos con el quiz.
+          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-2xl">
+            Sigue los pasos de esta clase interactiva para entender el tema a fondo, ver ejemplos resueltos, memorizar fórmulas y ponerte a prueba.
           </p>
         </div>
 
-        {/* Contenido Explicado del Tema (Texto enriquecido + Fórmulas KaTeX) */}
-        <section className="card p-6 sm:p-8 space-y-4">
-          <div className="flex items-center justify-between border-b border-white/8 pb-3">
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <BookOpen size={18} className="text-mint-400" /> Explicación Detallada del Tema
-            </h2>
-            <span className="text-[11px] font-semibold text-slate-400">Guía ECOEMS / COMIPEMS</span>
-          </div>
+        {/* ───────── NAVEGACIÓN POR PASOS DE LA CLASE (4 PASOS) ───────── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+          <button
+            type="button"
+            onClick={() => setClassStep(1)}
+            className={`flex items-center justify-center gap-2 rounded-xl py-2.5 px-3 text-xs font-bold transition cursor-pointer ${
+              classStep === 1
+                ? 'bg-white text-indigo-700 shadow-sm border border-slate-200/80 font-black'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <BookOpen size={15} /> 1. La Explicación
+          </button>
 
-          <div className="pt-2 text-slate-200">
-            <RichText text={activeTopic.summary} />
-          </div>
-        </section>
+          <button
+            type="button"
+            onClick={() => setClassStep(2)}
+            className={`flex items-center justify-center gap-2 rounded-xl py-2.5 px-3 text-xs font-bold transition cursor-pointer ${
+              classStep === 2
+                ? 'bg-white text-indigo-700 shadow-sm border border-slate-200/80 font-black'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Lightbulb size={15} /> 2. Ejemplos Guía
+          </button>
 
-        {/* Consejo del Tutor (Brian) */}
-        <section className="rounded-2xl border border-indigo-500/30 bg-indigo-500/10 p-5 sm:p-6 space-y-3 relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-indigo-300 flex items-center gap-2">
-              <Lightbulb size={17} className="text-amber-400" /> Consejo de {state.profile.tutor} para el examen:
-            </h3>
-            {isTutor && !isEditingTip && (
+          <button
+            type="button"
+            onClick={() => setClassStep(3)}
+            className={`flex items-center justify-center gap-2 rounded-xl py-2.5 px-3 text-xs font-bold transition cursor-pointer ${
+              classStep === 3
+                ? 'bg-white text-indigo-700 shadow-sm border border-slate-200/80 font-black'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Layers size={15} /> 3. Tarjetas Rápidas
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setClassStep(4)}
+            className={`flex items-center justify-center gap-2 rounded-xl py-2.5 px-3 text-xs font-bold transition cursor-pointer ${
+              classStep === 4
+                ? 'bg-white text-indigo-700 shadow-sm border border-slate-200/80 font-black'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Zap size={15} /> 4. Quiz del Tema
+          </button>
+        </div>
+
+        {/* ───────── PASO 1: EXPLICACIÓN DE LA CLASE ───────── */}
+        {classStep === 1 && (
+          <div className="space-y-5 animate-fade-in">
+            {/* Contenido Teórico Explicado */}
+            <section className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 space-y-4 shadow-sm">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <BookOpen size={18} className="text-indigo-600" /> Explicación de la Clase
+                </h2>
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  Guía Oficial ECOEMS
+                </span>
+              </div>
+
+              <div className="pt-2 text-slate-800 leading-relaxed">
+                <RichText text={activeTopic.summary} />
+              </div>
+            </section>
+
+            {/* Consejo especial del Tutor Brian */}
+            <section className="rounded-2xl border border-indigo-200 bg-indigo-50/60 p-5 sm:p-6 space-y-3 relative">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-indigo-900 flex items-center gap-2">
+                  <Lightbulb size={18} className="text-amber-500" />
+                  Consejo de {state.profile.tutor} para este tema en el examen:
+                </h3>
+                {isTutor && !isEditingTip && (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingTip(true)}
+                    className="flex items-center gap-1 text-[11px] font-bold text-indigo-700 hover:text-indigo-900 cursor-pointer"
+                  >
+                    <Pencil size={12} /> Editar consejo
+                  </button>
+                )}
+              </div>
+
+              {isEditingTip ? (
+                <div className="space-y-2">
+                  <textarea
+                    rows={3}
+                    className="w-full rounded-xl border border-indigo-300 bg-white p-3 text-xs text-slate-800 focus:outline-indigo-500"
+                    value={tipDraft}
+                    onChange={(e) => setTipDraft(e.target.value)}
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingTip(false)}
+                      className="rounded-lg px-3 py-1 text-xs text-slate-600 hover:text-slate-900 cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        actions.updateTopic(activeTopic.id, { tip: tipDraft })
+                        setIsEditingTip(false)
+                        toast({ tone: 'success', title: 'Consejo actualizado para Ingrid' })
+                      }}
+                      className="rounded-lg bg-indigo-600 px-3 py-1 text-xs font-bold text-white cursor-pointer"
+                    >
+                      Guardar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs sm:text-sm text-indigo-950 italic leading-relaxed">
+                  “{activeTopic.tip || 'Lee este tema con calma y anota las dudas que te surjan en tus notas.'}”
+                </p>
+              )}
+            </section>
+
+            {/* Checklist de comprensión de subtemas */}
+            <section className="rounded-3xl border border-slate-200/90 bg-white p-6 space-y-3 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <CheckCircle2 size={16} className="text-emerald-600" /> Conceptos que debes dominar:
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Marca las casillas conforme sientas que ya comprendiste cada parte.
+                  </p>
+                </div>
+                <span className="text-xs font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+                  {doneSubs} de {activeTopic.subtopics.length}
+                </span>
+              </div>
+
+              <div className="space-y-2 pt-1">
+                {activeTopic.subtopics.map((sub) => (
+                  <button
+                    key={sub.id}
+                    type="button"
+                    onClick={() => actions.toggleSubtopic(activeTopic.id, sub.id, !sub.done)}
+                    className={`flex w-full cursor-pointer items-center gap-3 rounded-2xl border p-3.5 text-left transition ${
+                      sub.done
+                        ? 'border-emerald-200 bg-emerald-50/70 text-slate-900'
+                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span
+                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-black ${
+                        sub.done ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-400'
+                      }`}
+                    >
+                      {sub.done ? '✓' : '○'}
+                    </span>
+                    <span className={`text-xs sm:text-sm font-medium ${sub.done ? 'line-through text-slate-400' : 'text-slate-800'}`}>
+                      {sub.title}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            {/* Apuntes de Ingrid */}
+            <section className="rounded-3xl border border-slate-200/90 bg-white p-5 space-y-2 shadow-sm">
+              <label className="text-xs font-bold text-slate-800 flex items-center gap-2">
+                <NotebookPen size={15} className="text-indigo-600" /> Mis notas personales de esta clase:
+              </label>
+              <textarea
+                rows={2}
+                placeholder="Escribe dudas para preguntarle a Brian o trucos que quieras recordar..."
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-indigo-500 focus:outline-none transition"
+                value={personalNotes}
+                onChange={(e) => setPersonalNotes(e.target.value)}
+              />
+            </section>
+
+            {/* Botón para pasar al siguiente paso */}
+            <div className="flex justify-end pt-2">
               <button
                 type="button"
-                onClick={() => setIsEditingTip(true)}
-                className="flex items-center gap-1 text-[11px] font-bold text-indigo-300 hover:text-white"
+                onClick={() => setClassStep(2)}
+                className="btn btn-primary px-6 py-3 text-xs sm:text-sm font-black shadow-md cursor-pointer"
               >
-                <Pencil size={12} /> Editar consejo
+                Paso 2: Ver Ejemplos Resueltos <ArrowRight size={16} />
               </button>
-            )}
+            </div>
           </div>
+        )}
 
-          {isEditingTip ? (
-            <div className="space-y-2">
-              <textarea
-                rows={3}
-                className="w-full rounded-xl border border-indigo-500/40 bg-slate-950 p-3 text-xs text-white focus:outline-none"
-                value={tipDraft}
-                onChange={(e) => setTipDraft(e.target.value)}
-              />
-              <div className="flex justify-end gap-2">
+        {/* ───────── PASO 2: EJEMPLOS RESUELTOS PASO A PASO ───────── */}
+        {classStep === 2 && (
+          <div className="space-y-5 animate-fade-in">
+            <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 text-xs text-amber-900 flex items-center gap-2.5">
+              <Sparkles size={16} className="text-amber-600 shrink-0" />
+              <span>
+                <strong>Así viene en el examen:</strong> Revisa el desarrollo de cada reactivo para aprender a resolverlo rápido y descartar respuestas trampa.
+              </span>
+            </div>
+
+            {examples.map((ex, idx) => (
+              <div
+                key={idx}
+                className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-7 shadow-sm space-y-4"
+              >
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <h3 className="font-display text-base font-bold text-slate-900 flex items-center gap-2">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700 text-xs font-black">
+                      {idx + 1}
+                    </span>
+                    {ex.title}
+                  </h3>
+                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    Problema Explicado
+                  </span>
+                </div>
+
+                <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100 font-semibold text-slate-800 text-xs sm:text-sm whitespace-pre-line leading-relaxed">
+                  {ex.problem}
+                </div>
+
+                <div className="space-y-2.5 pt-1">
+                  <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3.5 text-xs text-indigo-950 leading-relaxed">
+                    <strong className="text-indigo-700 font-bold block mb-1">Paso 1: Identificar datos y fórmula</strong>
+                    {ex.step1}
+                  </div>
+
+                  <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3.5 text-xs text-emerald-950 leading-relaxed">
+                    <strong className="text-emerald-700 font-bold block mb-1">Paso 2: Operaciones y despeje</strong>
+                    {ex.step2}
+                  </div>
+
+                  <div className="rounded-xl border border-purple-100 bg-purple-50/50 p-3.5 text-xs text-purple-950 leading-relaxed">
+                    <strong className="text-purple-700 font-bold block mb-1">Paso 3: Conclusión y respuesta</strong>
+                    {ex.step3}
+                  </div>
+                </div>
+
+                {ex.examSecret && (
+                  <div className="rounded-xl bg-amber-50/80 border border-amber-200 p-3 text-xs text-amber-900 font-medium flex items-center gap-2">
+                    <Zap size={14} className="text-amber-600 shrink-0" />
+                    <span><strong>Truco del examen:</strong> {ex.examSecret}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            <div className="flex items-center justify-between pt-2">
+              <button
+                type="button"
+                onClick={() => setClassStep(1)}
+                className="btn btn-ghost px-5 py-2.5 text-xs font-bold"
+              >
+                <ArrowLeft size={14} /> Volver a la explicación
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setClassStep(3)}
+                className="btn btn-primary px-6 py-3 text-xs sm:text-sm font-black shadow-md cursor-pointer"
+              >
+                Paso 3: Tarjetas de Repaso <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ───────── PASO 3: TARJETAS DE MEMORIA DEL TEMA ───────── */}
+        {classStep === 3 && (
+          <div className="space-y-5 animate-fade-in">
+            <div className="rounded-2xl bg-indigo-50 border border-indigo-200 p-4 text-xs text-indigo-900 flex items-center gap-2.5">
+              <Layers size={16} className="text-indigo-600 shrink-0" />
+              <span>
+                <strong>Memorización activa:</strong> Lee la pregunta, piensa la respuesta y toca la tarjeta para comprobar si acertaste antes del quiz.
+              </span>
+            </div>
+
+            {topicCards.length > 0 ? (
+              <div className="space-y-4">
+                {/* Selector rápido de tarjeta */}
+                <div className="flex items-center justify-between text-xs font-bold text-slate-500">
+                  <span>Tarjeta {activeCardIndex + 1} de {topicCards.length}</span>
+                  <span className="text-indigo-600 flex items-center gap-1">
+                    <RotateCcw size={12} /> Toca la tarjeta para voltearla
+                  </span>
+                </div>
+
+                {/* Tarjeta interactiva */}
+                <div
+                  onClick={() => setCardFlipped(!cardFlipped)}
+                  className={`min-h-[260px] sm:min-h-[280px] rounded-3xl border border-slate-200/90 p-6 sm:p-8 flex flex-col justify-between cursor-pointer transition-all duration-300 shadow-md ${
+                    cardFlipped
+                      ? 'bg-linear-to-br from-indigo-50 via-white to-emerald-50 border-indigo-300'
+                      : 'bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="rounded-full bg-indigo-100 text-indigo-800 px-3 py-0.5 text-xs font-black">
+                      {topicCards[activeCardIndex].topic}
+                    </span>
+                    <span className="text-xs font-bold text-slate-400">
+                      {cardFlipped ? 'Respuesta' : 'Pregunta'}
+                    </span>
+                  </div>
+
+                  <div className="my-auto py-4 text-center space-y-2">
+                    {!cardFlipped ? (
+                      <>
+                        <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Pregunta</p>
+                        <h3 className="font-display text-lg sm:text-xl font-black text-slate-900">
+                          {topicCards[activeCardIndex].question}
+                        </h3>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-[11px] font-black uppercase tracking-wider text-emerald-700">Respuesta</p>
+                        <p className="font-display text-base sm:text-lg font-bold text-slate-800 whitespace-pre-line leading-relaxed">
+                          {topicCards[activeCardIndex].answer}
+                        </p>
+                        {topicCards[activeCardIndex].tip && (
+                          <p className="text-xs text-amber-800 bg-amber-50 rounded-xl p-2 font-medium mt-2 inline-block">
+                            💡 {topicCards[activeCardIndex].tip}
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  <div className="text-center text-xs font-bold text-slate-400">
+                    {cardFlipped ? 'Toca para volver a la pregunta' : 'Toca para ver la respuesta'}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    type="button"
+                    disabled={activeCardIndex === 0}
+                    onClick={() => {
+                      setCardFlipped(false)
+                      setActiveCardIndex((i) => Math.max(0, i - 1))
+                    }}
+                    className="btn btn-ghost px-4 py-2 text-xs font-bold"
+                  >
+                    <ArrowLeft size={14} /> Anterior
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={activeCardIndex === topicCards.length - 1}
+                    onClick={() => {
+                      setCardFlipped(false)
+                      setActiveCardIndex((i) => Math.min(topicCards.length - 1, i + 1))
+                    }}
+                    className="btn btn-ghost px-4 py-2 text-xs font-bold"
+                  >
+                    Siguiente tarjeta <ArrowRight size={14} />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-500 py-4 text-center">
+                Pasa al siguiente paso para realizar el quiz del tema.
+              </p>
+            )}
+
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setClassStep(2)}
+                className="btn btn-ghost px-5 py-2.5 text-xs font-bold"
+              >
+                <ArrowLeft size={14} /> Volver a Ejemplos
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setClassStep(4)}
+                className="btn btn-primary px-6 py-3 text-xs sm:text-sm font-black shadow-md cursor-pointer"
+              >
+                Paso 4: ¡Hacer el Quiz del Tema! 🎯 <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ───────── PASO 4: EVALUACIÓN Y QUIZ DEL TEMA ───────── */}
+        {classStep === 4 && (
+          <div className="space-y-6 animate-fade-in">
+            <div className="rounded-3xl border border-emerald-300 bg-linear-to-br from-emerald-50 via-white to-indigo-50 p-6 sm:p-8 shadow-lg text-center space-y-4">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-lg shadow-emerald-200">
+                <Trophy size={28} />
+              </div>
+
+              <div className="space-y-1">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800">
+                  <Sparkles size={13} /> Evaluación Final del Tema
+                </span>
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900">
+                  ¡Hora de demostrar lo que aprendiste!
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-600 max-w-lg mx-auto">
+                  Responde los reactivos específicos de <strong>{activeTopic.title}</strong> para ganar puntos y marcar la clase como dominada.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setIsEditingTip(false)}
-                  className="rounded-lg px-3 py-1 text-xs text-slate-400 hover:text-white"
+                  onClick={() =>
+                    navigate('simulador', {
+                      topic: activeTopic.id,
+                      subject: currentSubject.id,
+                      auto: 'true',
+                    })
+                  }
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 px-8 py-4 text-xs sm:text-sm font-black text-white shadow-xl shadow-indigo-200 transition cursor-pointer"
                 >
-                  Cancelar
+                  <Zap size={18} fill="currentColor" /> Comenzar Quiz de este Tema
                 </button>
+
                 <button
                   type="button"
                   onClick={() => {
-                    actions.updateTopic(activeTopic.id, { tip: tipDraft })
-                    setIsEditingTip(false)
-                    toast({ tone: 'success', title: 'Consejo actualizado para Ingrid' })
+                    actions.setTopicStatus(activeTopic.id, 'dominado')
+                    toast({ tone: 'success', title: '¡Clase marcada como Dominada! 🌟' })
                   }}
-                  className="rounded-lg bg-indigo-600 px-3 py-1 text-xs font-bold text-white"
+                  className="w-full sm:w-auto rounded-2xl border border-slate-300 bg-white hover:bg-slate-50 px-5 py-4 text-xs font-bold text-slate-700 transition cursor-pointer"
                 >
-                  Guardar
+                  Ya lo sé todo, marcar como Dominada
                 </button>
               </div>
             </div>
-          ) : (
-            <p className="text-xs sm:text-sm text-slate-200 italic leading-relaxed">
-              “{activeTopic.tip || 'Repasa con calma los conceptos y haz notas en tu libreta.'}”
-            </p>
-          )}
-        </section>
 
-        {/* Checklist de lo que debes entender (Subtemas) */}
-        <section className="card p-6 space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-bold text-white flex items-center gap-2">
-                <CheckCircle2 size={16} className="text-mint-400" /> Puntos clave que debes dominar de este tema:
-              </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Haz clic en cada parte conforme sientas que ya la entendiste para medir tu avance.
-              </p>
-            </div>
-            <span className="text-xs font-black text-emerald-400 shrink-0">
-              {doneSubs} de {activeTopic.subtopics.length}
-            </span>
-          </div>
-
-          <div className="space-y-2 pt-2">
-            {activeTopic.subtopics.map((sub) => (
-              <button
-                key={sub.id}
-                type="button"
-                onClick={() => actions.toggleSubtopic(activeTopic.id, sub.id, !sub.done)}
-                className={`flex w-full cursor-pointer items-center gap-3 rounded-xl border p-3 text-left transition ${
-                  sub.done
-                    ? 'border-emerald-500/30 bg-emerald-500/10 text-white'
-                    : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:border-slate-700 hover:bg-slate-900/60'
-                }`}
-              >
-                <span
-                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
-                    sub.done ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400'
-                  }`}
-                >
-                  {sub.done ? '✓' : '○'}
-                </span>
-                <span className={`text-xs sm:text-sm font-medium ${sub.done ? 'line-through text-slate-400' : 'text-white'}`}>
-                  {sub.title}
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {/* Mis notas y dudas personales */}
-        <section className="card p-5 space-y-2">
-          <label className="text-xs font-bold text-white flex items-center gap-2">
-            <NotebookPen size={15} className="text-indigo-400" /> Tus apuntes personales de este tema (se guardan solos):
-          </label>
-          <textarea
-            rows={3}
-            placeholder="Apunta aquí dudas que tengas para preguntarle a Brian, ejemplos o trucos que te sirvan..."
-            className="w-full rounded-xl border border-slate-800 bg-slate-950 p-3 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
-            value={personalNotes}
-            onChange={(e) => setPersonalNotes(e.target.value)}
-          />
-        </section>
-
-        {/* ───────── BANNER DE EVALUACIÓN FINAL: ¿YA LEÍSTE? HAZ EL QUIZ ───────── */}
-        <section className="card p-6 sm:p-8 border-mint-400/40 bg-gradient-to-r from-mint-500/15 via-slate-900 to-indigo-500/15 shadow-2xl">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
-            <div className="space-y-1">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-mint-400/20 px-3 py-1 text-xs font-bold text-mint-300">
-                <Sparkles size={13} /> Siguiente paso
-              </span>
-              <h3 className="text-lg sm:text-xl font-extrabold text-white">
-                ¿Terminaste de leer y estudiar la explicación?
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-300 max-w-lg">
-                Es momento de poner a prueba lo que acabas de aprender con un quiz rápido de reactivos tipo examen sobre este tema.
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-2.5 shrink-0">
+            <div className="flex justify-start">
               <button
                 type="button"
-                onClick={() =>
-                  navigate('simulador', {
-                    topic: activeTopic.id,
-                    subject: currentSubject.id,
-                    auto: 'true',
-                  })
-                }
-                className="flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-6 py-3.5 text-xs sm:text-sm font-extrabold text-slate-950 shadow-xl shadow-emerald-500/20 transition cursor-pointer"
+                onClick={() => setClassStep(1)}
+                className="btn btn-ghost px-5 py-2.5 text-xs font-bold"
               >
-                <Zap size={16} fill="currentColor" /> ¡Hacer Quiz de este tema ahora!
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  actions.setTopicStatus(activeTopic.id, isMastered ? 'pendiente' : 'dominado')
-                  toast({
-                    tone: !isMastered ? 'success' : 'info',
-                    title: !isMastered ? '¡Tema marcado como Dominado! 🌟' : 'Tema marcado para repasar',
-                  })
-                }}
-                className="rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-800 px-4 py-3 text-xs font-bold text-slate-300 hover:text-white transition cursor-pointer text-center"
-              >
-                {isMastered ? '✓ Dominado' : 'Marcar como aprendido'}
+                <ArrowLeft size={14} /> Volver a repasar la explicación
               </button>
             </div>
           </div>
-        </section>
+        )}
 
-        {/* Navegación entre temas de la materia (Anterior / Siguiente) */}
-        <div className="flex items-center justify-between pt-4 border-t border-white/8 text-xs">
+        {/* Navegación entre temas (Anterior y Siguiente) */}
+        <div className="flex items-center justify-between pt-4 border-t border-slate-200 text-xs">
           {prevTopic ? (
             <button
               type="button"
-              onClick={() => setActiveTopicId(prevTopic.id)}
-              className="flex items-center gap-1.5 font-bold text-slate-300 hover:text-white transition cursor-pointer"
+              onClick={() => {
+                setActiveTopicId(prevTopic.id)
+                setClassStep(1)
+              }}
+              className="flex items-center gap-1.5 font-bold text-slate-600 hover:text-slate-900 transition cursor-pointer"
             >
               <ArrowLeft size={14} /> Anterior: {prevTopic.title}
             </button>
@@ -351,8 +657,11 @@ export default function LearningRoute() {
           {nextTopic ? (
             <button
               type="button"
-              onClick={() => setActiveTopicId(nextTopic.id)}
-              className="flex items-center gap-1.5 font-bold text-emerald-400 hover:text-emerald-300 transition cursor-pointer"
+              onClick={() => {
+                setActiveTopicId(nextTopic.id)
+                setClassStep(1)
+              }}
+              className="flex items-center gap-1.5 font-bold text-indigo-600 hover:text-indigo-800 transition cursor-pointer"
             >
               Siguiente: {nextTopic.title} <ArrowRight size={14} />
             </button>
@@ -363,9 +672,9 @@ export default function LearningRoute() {
                 setActiveTopicId(null)
                 navigate('ruta', { subject: currentSubject.id })
               }}
-              className="font-bold text-mint-400 hover:text-mint-300 cursor-pointer"
+              className="font-bold text-emerald-600 hover:text-emerald-800 cursor-pointer"
             >
-              ¡Has visto todos los temas de {currentSubject.name}!
+              ¡Has terminado todos los temas de {currentSubject.name}!
             </button>
           )}
         </div>
@@ -374,159 +683,164 @@ export default function LearningRoute() {
   }
 
   /* ─────────────────────────────────────────────────────────────
-     VISTA 2: LISTA DE MATERIAS Y TEMAS (SELECCIÓN)
+     VISTA 2: LISTA GENERAL DE MATERIAS Y SUS CLASES
   ───────────────────────────────────────────────────────────── */
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      {/* 1. Selector amigable de las 8 materias */}
-      <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
-        {SUBJECTS.map((s) => {
-          const active = s.id === currentSubject.id
-          const p = subjectProgress(state, s.id)
+    <div className="space-y-6 max-w-4xl mx-auto animate-fade-up">
+      {/* Encabezado Principal */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 px-3 py-1 text-xs font-black text-emerald-700">
+            <BookOpen size={13} /> Tu Salón de Clases
+          </span>
+          <h1 className="font-display text-2xl sm:text-3xl font-black text-slate-900 mt-1">
+            Mis Clases ECOEMS
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
+            Selecciona una materia, lee la clase con ejemplos resueltos y pon a prueba tu conocimiento.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => navigate('tarjetas')}
+          className="flex items-center gap-2 rounded-2xl border border-indigo-200 bg-indigo-50/70 px-4 py-2.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100 transition shadow-xs cursor-pointer self-start sm:self-auto"
+        >
+          <Layers size={15} /> Ver Tarjetas de Memoria
+        </button>
+      </div>
+
+      {/* Selector de Materias en Pestañas */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+        {SUBJECTS.map((sub) => {
+          const active = sub.id === selectedSubjectId
+          const p = subjectProgress(state, sub.id)
           return (
             <button
-              key={s.id}
+              key={sub.id}
               type="button"
-              onClick={() => {
-                setSelectedSubjectId(s.id)
-                setActiveTopicId(null)
-                navigate('ruta', { subject: s.id })
-              }}
-              className={`flex shrink-0 items-center gap-2.5 rounded-2xl border px-3.5 py-2.5 transition cursor-pointer ${
+              onClick={() => setSelectedSubjectId(sub.id)}
+              className={`flex shrink-0 items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-bold transition cursor-pointer border ${
                 active
-                  ? 'border-mint-400 bg-mint-400/15 text-white shadow-lg shadow-mint-500/10'
-                  : 'border-white/6 bg-ink-950/40 text-ink-300 hover:text-white hover:bg-white/5'
+                  ? 'border-indigo-600 bg-indigo-600 text-white shadow-md shadow-indigo-200'
+                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 shadow-xs'
               }`}
             >
-              <SubjectIcon subjectId={s.id} size="sm" />
-              <div className="text-left">
-                <p className="text-xs font-bold leading-tight truncate">{s.name}</p>
-                <p className="text-[10px] font-semibold tabular-nums text-mint-400">{p.pct}% completado</p>
-              </div>
+              <SubjectIcon subjectId={sub.id} size="xs" />
+              <span>{sub.name}</span>
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] font-black ${
+                  active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+                }`}
+              >
+                {p.dominado}/{p.total}
+              </span>
             </button>
           )
         })}
       </div>
 
-      {/* 2. Banner de la materia activa */}
+      {/* Tarjeta de Progreso de la Materia Seleccionada */}
       <div
-        className="card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border"
+        className="rounded-3xl border bg-white p-6 sm:p-7 shadow-sm space-y-3"
         style={{
           borderColor: `${currentSubject.color}40`,
-          backgroundImage: `linear-gradient(135deg, ${currentSubject.color}15, transparent 60%)`,
+          backgroundImage: `linear-gradient(135deg, ${currentSubject.color}08, #ffffff 65%)`,
         }}
       >
-        <div className="flex items-center gap-3.5">
-          <SubjectIcon subjectId={currentSubject.id} size="lg" />
-          <div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-white">
-              {currentSubject.name}
-            </h1>
-            <p className="text-xs text-ink-200 mt-0.5">
-              {currentSubject.description}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <SubjectIcon subjectId={currentSubject.id} size="md" />
+            <div>
+              <h2 className="text-lg font-black text-slate-900">{currentSubject.name}</h2>
+              <p className="text-xs text-slate-500">{currentSubject.description}</p>
+            </div>
+          </div>
+
+          <div className="text-right">
+            <span className="text-xs font-bold text-slate-500">Avance de la materia</span>
+            <p className="font-display text-xl font-black" style={{ color: currentSubject.color }}>
+              {progress.pct}% ({progress.dominado} de {progress.total} clases dominadas)
             </p>
           </div>
         </div>
 
-        <div className="text-right sm:min-w-40 space-y-1">
-          <p className="text-xs font-bold text-white">
-            {progress.dominado} de {progress.total} temas dominados
-          </p>
-          <ProgressBar value={progress.pct} color={currentSubject.color} height={7} />
-        </div>
+        <ProgressBar value={progress.pct} color={currentSubject.color} height={7} />
       </div>
 
-      {/* 3. Lista de temas en tarjetas limpias */}
+      {/* Lista de Clases / Temas */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between px-1">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-300">
-            Temas de {currentSubject.name}:
-          </h2>
-          <span className="text-xs text-slate-400 font-medium">
-            Elige un tema para leer la explicación o ponte a prueba directo
-          </span>
-        </div>
+        <h3 className="font-display text-sm font-bold text-slate-800 uppercase tracking-wider px-1">
+          Clases de {currentSubject.name} (en orden recomendado)
+        </h3>
 
-        {topics.map((topic, index) => {
-          const isMastered = topic.status === 'dominado'
-          const doneSubs = topic.subtopics.filter((s) => s.done).length
+        {topics.map((t, idx) => {
+          const isMastered = t.status === 'dominado'
+          const doneSubs = t.subtopics.filter((s) => s.done).length
 
           return (
             <div
-              key={topic.id}
-              className={`rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition border ${
-                isMastered ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-slate-800 bg-slate-900/80 hover:border-slate-700'
+              key={t.id}
+              className={`rounded-3xl border p-5 sm:p-6 transition-all shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                isMastered
+                  ? 'border-emerald-200 bg-emerald-50/30'
+                  : 'border-slate-200/90 bg-white hover:border-slate-300 hover:shadow-md'
               }`}
             >
-              <div className="flex items-start gap-3.5 min-w-0">
-                <div
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl font-display text-xs font-extrabold ${
-                    isMastered ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-300'
-                  }`}
-                >
-                  {isMastered ? <CheckCircle2 size={16} /> : index + 1}
+              <div className="space-y-2 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-100 text-xs font-black text-slate-700">
+                    {idx + 1}
+                  </span>
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-[11px] font-black ${
+                      isMastered
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : 'bg-amber-100 text-amber-800'
+                    }`}
+                  >
+                    {isMastered ? '✓ Clase Dominada' : 'Por Estudiar'}
+                  </span>
+                  <span className="text-xs text-slate-400 font-semibold flex items-center gap-1">
+                    <Clock size={12} /> ~{t.minutes} min
+                  </span>
                 </div>
 
-                <div className="space-y-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3
-                      onClick={() => setActiveTopicId(topic.id)}
-                      className="font-bold text-sm sm:text-base text-white hover:text-emerald-300 cursor-pointer transition truncate"
-                    >
-                      {topic.title}
-                    </h3>
-                    <span
-                      className={`rounded px-1.5 py-0.2 text-[10px] font-bold border ${
-                        isMastered
-                          ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                          : 'border-slate-700 bg-slate-800/80 text-slate-400'
-                      }`}
-                    >
-                      {isMastered ? '✓ Dominado' : 'Por repasar'}
-                    </span>
-                  </div>
+                <h4 className="font-display text-base font-bold text-slate-900">
+                  {t.title}
+                </h4>
 
-                  <div className="flex items-center gap-3 text-xs text-slate-400">
-                    <span className="flex items-center gap-1">
-                      <Clock size={12} className="text-mint-400" /> ~{topic.minutes} min
-                    </span>
-                    <span>•</span>
-                    <span>{doneSubs} de {topic.subtopics.length} partes dominadas</span>
-                  </div>
-
-                  {topic.tip && (
-                    <p className="text-xs text-indigo-300 line-clamp-1 italic">
-                      💡 Consejo: {topic.tip}
-                    </p>
-                  )}
-                </div>
+                <p className="text-xs text-slate-500">
+                  {doneSubs} de {t.subtopics.length} partes dominadas
+                </p>
               </div>
 
-              {/* Botones de acción claros: LEER primero o HACER QUIZ */}
-              <div className="flex items-center gap-2 shrink-0 pt-2 sm:pt-0 border-t border-slate-800 sm:border-t-0 justify-end flex-wrap">
-                {/* 1. Botón para leer la explicación */}
+              {/* Botones de Acción: Entrar a Clase vs Hacer Quiz */}
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
-                  onClick={() => setActiveTopicId(topic.id)}
-                  className="flex items-center gap-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold px-3.5 py-2 text-xs transition cursor-pointer border border-slate-700"
+                  onClick={() => {
+                    setActiveTopicId(t.id)
+                    setClassStep(1)
+                  }}
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black px-5 py-3 text-xs shadow-md shadow-indigo-200 transition cursor-pointer"
                 >
-                  <BookOpen size={14} className="text-mint-400" /> Leer explicación
+                  <BookOpen size={15} /> Entrar a la Clase
                 </button>
 
-                {/* 2. Botón directo de Quiz por si ya lo leyeron */}
                 <button
                   type="button"
                   onClick={() =>
                     navigate('simulador', {
-                      topic: topic.id,
+                      topic: t.id,
                       subject: currentSubject.id,
                       auto: 'true',
                     })
                   }
-                  className="flex items-center gap-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-3.5 py-2 text-xs transition cursor-pointer shadow-sm"
-                  title="Poner a prueba lo que sabes de este tema"
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-2xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold px-4 py-3 text-xs transition cursor-pointer"
+                  title="Saltar directo al quiz si ya lo leíste"
                 >
-                  <Zap size={14} fill="currentColor" /> Hacer Quiz
+                  <Zap size={14} className="text-amber-600" /> Quiz directo
                 </button>
               </div>
             </div>

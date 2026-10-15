@@ -6,10 +6,10 @@ import { useApp } from '../../context/AppContext'
 import { Icon } from './Icon'
 
 const TONES = {
-  success: { icon: CheckCircle2, color: '#6ef0c3' },
-  info: { icon: Info, color: '#5ab4ff' },
-  warning: { icon: TriangleAlert, color: '#fbbf24' },
-  badge: { icon: null, color: '#c4b5fd' },
+  success: { icon: CheckCircle2, color: '#059669', bg: '#ecfdf5', border: '#a7f3d0', text: '#065f46' },
+  info: { icon: Info, color: '#4f46e5', bg: '#eef2ff', border: '#c7d2fe', text: '#3730a3' },
+  warning: { icon: TriangleAlert, color: '#d97706', bg: '#fffbeb', border: '#fde68a', text: '#92400e' },
+  badge: { icon: null, color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe', text: '#5b21b6' },
 }
 
 export function Toaster() {
@@ -22,20 +22,25 @@ export function Toaster() {
         return (
           <div
             key={t.id}
-            className="pointer-events-auto flex w-full max-w-sm animate-pop items-start gap-3 rounded-2xl border border-white/10 bg-ink-850/95 p-4 shadow-2xl backdrop-blur-xl"
-            style={{ boxShadow: `0 20px 50px -20px ${tone.color}66` }}
+            className="pointer-events-auto flex w-full max-w-sm animate-scale-up items-start gap-3 rounded-2xl border p-4 shadow-xl backdrop-blur-md"
+            style={{ backgroundColor: '#ffffff', borderColor: tone.border }}
           >
             <span
               className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${t.tone === 'badge' ? 'animate-float' : ''}`}
-              style={{ background: `${tone.color}22`, color: tone.color }}
+              style={{ background: tone.bg, color: tone.color }}
             >
               {Ico ? <Ico size={18} /> : <Icon name={t.icon} size={18} />}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-white">{t.title}</p>
-              {t.description && <p className="mt-0.5 text-xs text-ink-300">{t.description}</p>}
+              <p className="text-sm font-bold text-slate-900">{t.title}</p>
+              {t.description && <p className="mt-0.5 text-xs text-slate-600">{t.description}</p>}
             </div>
-            <button type="button" onClick={() => dismissToast(t.id)} className="cursor-pointer text-ink-300 hover:text-white" aria-label="Cerrar notificación">
+            <button
+              type="button"
+              onClick={() => dismissToast(t.id)}
+              className="cursor-pointer text-slate-400 hover:text-slate-700"
+              aria-label="Cerrar notificación"
+            >
               <X size={16} />
             </button>
           </div>
@@ -50,13 +55,13 @@ export function PageHeader({ eyebrow, title, description, actions, icon: Ico }) 
     <header className="mb-6 flex animate-fade-up flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
         {eyebrow && (
-          <p className="mb-2 flex items-center gap-2 text-xs font-bold tracking-[0.18em] text-mint-400 uppercase">
+          <p className="mb-2 flex items-center gap-2 text-xs font-bold tracking-[0.18em] text-indigo-600 uppercase">
             {Ico && <Ico size={14} />}
             {eyebrow}
           </p>
         )}
-        <h1 className="text-3xl font-extrabold sm:text-4xl">{title}</h1>
-        {description && <p className="mt-2 max-w-2xl text-ink-300">{description}</p>}
+        <h1 className="text-3xl font-black text-slate-900 sm:text-4xl">{title}</h1>
+        {description && <p className="mt-1.5 max-w-2xl text-xs sm:text-sm text-slate-600">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </header>
@@ -65,14 +70,14 @@ export function PageHeader({ eyebrow, title, description, actions, icon: Ico }) 
 
 export function EmptyState({ icon: Ico, title, description, action }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/10 px-6 py-12 text-center">
+    <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center shadow-xs">
       {Ico && (
-        <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-iris-500/15 text-iris-300">
+        <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
           <Ico size={26} />
         </span>
       )}
-      <p className="font-display text-lg font-bold text-white">{title}</p>
-      {description && <p className="mt-1 max-w-sm text-sm text-ink-300">{description}</p>}
+      <p className="font-display text-lg font-bold text-slate-900">{title}</p>
+      {description && <p className="mt-1 max-w-sm text-xs sm:text-sm text-slate-500">{description}</p>}
       {action && <div className="mt-5">{action}</div>}
     </div>
   )

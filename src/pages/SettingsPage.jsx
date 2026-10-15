@@ -1,5 +1,5 @@
 /**
- * Ajustes y Configuración de Misión Prepa:
+ * Ajustes y Configuración de Misión Prepa (Solo Tutor):
  * - Nombres del estudiante y del tutor.
  * - Escuela meta y aciertos objetivo.
  * - Fecha del examen COMIPEMS.
@@ -75,16 +75,16 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-4xl mx-auto animate-fade-up">
       <PageHeader
         eyebrow="Personalización y Datos"
         title="Configuración de la Misión"
         description="Ajusta las metas, los nombres del tutor y estudiante, y administra las copias de seguridad de tu progreso."
       />
 
-      <form onSubmit={handleSaveProfile} className="card p-6 space-y-6">
+      <form onSubmit={handleSaveProfile} className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 space-y-6 shadow-xs">
         <h3 className="section-title flex items-center gap-2">
-          <UserCheck size={18} className="text-mint-400" /> Perfil y Metas
+          <UserCheck size={18} className="text-indigo-600" /> Perfil y Metas
         </h3>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -148,18 +148,18 @@ export default function SettingsPage() {
         </div>
 
         <div className="flex justify-end pt-2">
-          <button type="submit" className="btn btn-primary font-bold">
+          <button type="submit" className="btn btn-primary font-black shadow-md cursor-pointer">
             <Save size={16} /> Guardar cambios
           </button>
         </div>
       </form>
 
       {/* Respaldo y sincronización */}
-      <div className="card p-6 space-y-4">
+      <div className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 space-y-4 shadow-xs">
         <h3 className="section-title flex items-center gap-2">
-          <Download size={18} className="text-iris-400" /> Respaldo y Restauración de Datos
+          <Download size={18} className="text-indigo-600" /> Respaldo y Restauración de Datos
         </h3>
-        <p className="text-xs text-ink-300">
+        <p className="text-xs text-slate-500">
           Toda la información se almacena localmente en tu navegador (LocalStorage). Puedes descargar un archivo JSON para guardar tu progreso o transferirlo a otra computadora.
         </p>
 
@@ -167,12 +167,12 @@ export default function SettingsPage() {
           <button
             type="button"
             onClick={handleExportData}
-            className="btn btn-ghost text-xs font-semibold"
+            className="btn btn-ghost text-xs font-bold"
           >
             <Download size={14} /> Exportar copia de seguridad (.json)
           </button>
 
-          <label className="btn btn-ghost text-xs font-semibold cursor-pointer">
+          <label className="btn btn-ghost text-xs font-bold cursor-pointer">
             <Upload size={14} /> Importar copia (.json)
             <input
               type="file"
@@ -185,11 +185,11 @@ export default function SettingsPage() {
       </div>
 
       {/* Zona de peligro */}
-      <div className="card p-6 border-rose-500/20 bg-rose-500/5 space-y-3">
-        <h3 className="text-sm font-bold text-rose-300 flex items-center gap-2">
+      <div className="rounded-3xl border border-rose-200 bg-rose-50/50 p-6 space-y-3">
+        <h3 className="text-sm font-bold text-rose-800 flex items-center gap-2">
           <ShieldAlert size={16} /> Zona de reinicio
         </h3>
-        <p className="text-xs text-ink-300">
+        <p className="text-xs text-rose-700">
           Si deseas reiniciar las notas, materias y simulacros a su estado original de demostración, puedes hacerlo aquí.
         </p>
         <button

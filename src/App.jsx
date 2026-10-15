@@ -13,6 +13,7 @@ import LoginPage from './pages/LoginPage'
 import Dashboard from './pages/Dashboard'
 import TutorDashboard from './pages/TutorDashboard'
 import LearningRoute from './pages/LearningRoute'
+import FlashcardsPage from './pages/FlashcardsPage'
 import Simulator from './pages/Simulator'
 import Tasks from './pages/Tasks'
 import Analytics from './pages/Analytics'
@@ -32,6 +33,8 @@ function PageRouter() {
       return isTutor ? <TutorDashboard /> : <Dashboard />
     case 'ruta':
       return <LearningRoute />
+    case 'tarjetas':
+      return <FlashcardsPage />
     case 'simulador':
       return <Simulator />
     case 'tareas':

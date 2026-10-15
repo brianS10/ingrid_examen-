@@ -129,7 +129,7 @@ function reducer(state, action) {
 }
 
 /* ─────────────────────────── Navegación (hash) ──────────────────────── */
-const VIEWS = ['inicio', 'ruta', 'simulador', 'tareas', 'estadisticas', 'ajustes']
+const VIEWS = ['inicio', 'ruta', 'tarjetas', 'simulador', 'tareas', 'estadisticas', 'ajustes']
 
 function parseHash() {
   const [path, query = ''] = window.location.hash.replace(/^#\/?/, '').split('?')

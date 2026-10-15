@@ -1,8 +1,8 @@
 /**
  * Panel de Estadísticas y Analítica:
- * - Gráfica de Radar y Barras con Recharts para ver el dominio por materia (identificar puntos débiles).
- * - Historial y evolución de simulacros realizados (ej. 78 -> 86 -> 95 de 128 aciertos).
- * - Vitrina completa de todos los Logros y Medallas obtenidas o en progreso.
+ * - Gráfica de Radar y Barras para ver el dominio por materia.
+ * - Historial y evolución de cuestionarios realizados.
+ * - Vitrina de todos los Logros y Medallas obtenidas.
  */
 import { useMemo } from 'react'
 import {
@@ -43,7 +43,7 @@ export default function Analytics() {
   // Datos para la gráfica de evolución de simulacros
   const historyData = useMemo(() => {
     return state.history.map((h, idx) => ({
-      name: `S${idx + 1}`,
+      name: `Q${idx + 1}`,
       fullName: h.name,
       date: formatDate(h.date),
       aciertos: h.correct,
@@ -52,60 +52,63 @@ export default function Analytics() {
     }))
   }, [state.history])
 
-  const sims = simulacros(state.history)
-  const lastSim = sims.at(-1)
-
   return (
-    <div className="space-y-6">
-      <PageHeader
-        eyebrow="Analítica de Rendimiento"
-        title="Estadísticas y Progreso"
-        description="Analiza tu nivel de preparación global, fortalezas y puntos débiles que requieren más tutoría antes del COMIPEMS."
-      />
+    <div className="space-y-6 max-w-4xl mx-auto animate-fade-up">
+      <div className="space-y-1">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 px-3 py-1 text-xs font-black text-emerald-700">
+          <Award size={13} /> Diagnóstico de Progreso
+        </span>
+        <h1 className="font-display text-2xl sm:text-3xl font-black text-slate-900 mt-1">
+          Estadísticas y Medallas de Estudio
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-600">
+          Monitorea tu nivel de preparación general, tus materias más fuertes y las que conviene repasar más.
+        </p>
+      </div>
 
       {/* ───────────────── TARJETAS DE PUNTOS CLAVE ───────────────── */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="card p-5 border-mint-400/20 bg-linear-to-b from-mint-400/10 to-transparent">
-          <p className="flex items-center gap-2 text-xs font-bold text-mint-400 uppercase tracking-wider">
-            <TrendingUp size={15} /> Mejor avance
+      <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-3xl border border-emerald-200 bg-linear-to-b from-emerald-50/70 to-white p-5 shadow-xs">
+          <p className="flex items-center gap-2 text-xs font-black text-emerald-700 uppercase tracking-wider">
+            <TrendingUp size={15} /> Mayor avance
           </p>
-          <p className="mt-2 text-xl font-black text-white">{strongSubjects[0]?.name || '—'}</p>
-          <p className="text-xs text-ink-300 mt-1">
+          <p className="mt-2 text-xl font-black text-slate-900">{strongSubjects[0]?.name || '—'}</p>
+          <p className="text-xs text-slate-500 mt-1">
             {strongSubjects[0]?.mastery}% de dominio general
           </p>
         </div>
 
-        <div className="card p-5 border-amber-400/20 bg-linear-to-b from-amber-400/10 to-transparent">
-          <p className="flex items-center gap-2 text-xs font-bold text-amber-300 uppercase tracking-wider">
-            <AlertTriangle size={15} /> Área de atención
+        <div className="rounded-3xl border border-amber-200 bg-linear-to-b from-amber-50/70 to-white p-5 shadow-xs">
+          <p className="flex items-center gap-2 text-xs font-black text-amber-800 uppercase tracking-wider">
+            <AlertTriangle size={15} /> Área de refuerzo
           </p>
-          <p className="mt-2 text-xl font-black text-white">{weakSubjects[0]?.name || '—'}</p>
-          <p className="text-xs text-ink-300 mt-1">
-            {weakSubjects[0]?.mastery}% de dominio (priorizar tutoría)
+          <p className="mt-2 text-xl font-black text-slate-900">{weakSubjects[0]?.name || '—'}</p>
+          <p className="text-xs text-slate-500 mt-1">
+            {weakSubjects[0]?.mastery}% de dominio (priorizar clase)
           </p>
         </div>
 
-        <div className="card p-5">
-          <p className="flex items-center gap-2 text-xs font-bold text-indigo-300 uppercase tracking-wider">
-            <Target size={15} /> Meta ECOEMS / COMIPEMS
+        <div className="rounded-3xl border border-indigo-200 bg-linear-to-b from-indigo-50/70 to-white p-5 shadow-xs">
+          <p className="flex items-center gap-2 text-xs font-black text-indigo-700 uppercase tracking-wider">
+            <Target size={15} /> Meta ECOEMS
           </p>
-          <p className="mt-2 text-xl font-black text-white tabular-nums">
+          <p className="mt-2 text-xl font-black text-slate-900 tabular-nums">
             {state.profile.goalScore} / 128
           </p>
-          <p className="text-xs text-slate-400 mt-1">
-            Meta de aciertos ({state.profile.targetSchool})
+          <p className="text-xs text-slate-500 mt-1">
+            Aciertos objetivo ({state.profile.targetSchool})
           </p>
         </div>
 
-        <div className="card p-5">
-          <p className="flex items-center gap-2 text-xs font-bold text-sky-400 uppercase tracking-wider">
+        <div className="rounded-3xl border border-purple-200 bg-linear-to-b from-purple-50/70 to-white p-5 shadow-xs">
+          <p className="flex items-center gap-2 text-xs font-black text-purple-700 uppercase tracking-wider">
             <Sparkles size={15} /> Medallas ganadas
           </p>
-          <p className="mt-2 text-xl font-black text-white tabular-nums">
+          <p className="mt-2 text-xl font-black text-slate-900 tabular-nums">
             {badges.filter((b) => b.unlocked).length} de {badges.length}
           </p>
-          <p className="text-xs text-slate-400 mt-1">
-            {Math.round((badges.filter((b) => b.unlocked).length / badges.length) * 100)}% de insignias
+          <p className="text-xs text-slate-500 mt-1">
+            {Math.round((badges.filter((b) => b.unlocked).length / badges.length) * 100)}% desbloqueadas
           </p>
         </div>
       </div>
@@ -113,13 +116,13 @@ export default function Analytics() {
       {/* ───────────────── GRÁFICAS PRINCIPALES ───────────────── */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Gráfica Radar de Dominio por Materia */}
-        <section className="card p-6 flex flex-col justify-between" aria-label="Radar de Dominio">
+        <section className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs flex flex-col justify-between" aria-label="Radar de Dominio">
           <div>
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="section-title">Radar de Dominio por Materia</h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  Promedio ponderado entre temas completados y precisión en simulacros.
+                <h3 className="font-display text-base font-bold text-slate-900">Radar de Dominio por Materia</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Promedio entre clases dominadas y precisión en quizzes.
                 </p>
               </div>
             </div>
@@ -127,58 +130,58 @@ export default function Analytics() {
             <div className="h-72 w-full mt-4">
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart data={radarData}>
-                  <PolarGrid stroke="rgba(255, 255, 255, 0.1)" />
+                  <PolarGrid stroke="#e2e8f0" />
                   <PolarAngleAxis
                     dataKey="subject"
-                    tick={{ fill: '#b9c2e6', fontSize: 11, fontWeight: 'bold' }}
+                    tick={{ fill: '#334155', fontSize: 11, fontWeight: 'bold' }}
                   />
                   <PolarRadiusAxis
                     angle={30}
                     domain={[0, 100]}
-                    tick={{ fill: '#8d9acb', fontSize: 10 }}
+                    tick={{ fill: '#64748b', fontSize: 10 }}
                   />
                   <Radar
                     name="Dominio (%)"
                     dataKey="dominio"
-                    stroke="#10b981"
-                    fill="#10b981"
-                    fillOpacity={0.35}
+                    stroke="#4f46e5"
+                    fill="#4f46e5"
+                    fillOpacity={0.25}
                   />
                 </RadarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          <div className="mt-2 flex items-center justify-center gap-4 text-xs text-slate-400">
+          <div className="mt-2 flex items-center justify-center gap-4 text-xs text-slate-500 font-semibold">
             <span className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded-full bg-emerald-400" /> Nivel de dominio actual (%)
+              <span className="h-3 w-3 rounded-full bg-indigo-600" /> Nivel de dominio actual (%)
             </span>
           </div>
         </section>
 
-        {/* Evolución de Simulacros (Línea de Aciertos) */}
-        <section className="card p-6 flex flex-col justify-between" aria-label="Evolución de Simulacros">
+        {/* Evolución de Quizzes y Simulacros */}
+        <section className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs flex flex-col justify-between" aria-label="Evolución de Simulacros">
           <div>
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="section-title">Evolución de Rendimiento (%)</h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  Historial de precisión en cada cuestionario y simulacro realizado.
+                <h3 className="font-display text-base font-bold text-slate-900">Historial de Precisión (%)</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Porcentaje de aciertos en cada quiz realizado.
                 </p>
               </div>
-              <span className="chip border-indigo-400/30 bg-indigo-500/10 text-indigo-300 text-xs font-bold">
-                Meta: {Math.round((state.profile.goalScore / 128) * 100)}% ({state.profile.goalScore} aciertos)
+              <span className="rounded-full bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 text-indigo-700 text-xs font-bold">
+                Meta: {Math.round((state.profile.goalScore / 128) * 100)}%
               </span>
             </div>
 
             {historyData.length === 0 ? (
-              <div className="h-72 w-full mt-4 flex flex-col items-center justify-center rounded-2xl border border-slate-800 bg-slate-950/40 p-6 text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/15 text-indigo-400 mb-3">
+              <div className="h-72 w-full mt-4 flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600 mb-3">
                   <ChartIcon size={24} />
                 </div>
-                <p className="text-sm font-bold text-white">Sin cuestionarios realizados todavía</p>
-                <p className="text-xs text-slate-400 mt-1 max-w-xs">
-                  Al completar tus primeros quizzes en la pestaña Practicar, aquí verás la gráfica con tu evolución de aciertos.
+                <p className="text-sm font-bold text-slate-900">Aún no hay quizzes realizados</p>
+                <p className="text-xs text-slate-500 mt-1 max-w-xs">
+                  Al completar tus primeros quizzes en el Salón de Clases, aquí verás la gráfica con tu avance.
                 </p>
                 <button
                   type="button"
@@ -192,18 +195,18 @@ export default function Analytics() {
               <div className="h-72 w-full mt-4">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={historyData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.05)" />
-                    <XAxis dataKey="name" tick={{ fill: '#8d9acb', fontSize: 11 }} />
-                    <YAxis domain={[0, 100]} tick={{ fill: '#8d9acb', fontSize: 11 }} unit="%" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 11 }} />
+                    <YAxis domain={[0, 100]} tick={{ fill: '#64748b', fontSize: 11 }} unit="%" />
                     <Tooltip
                       content={({ active, payload }) => {
                         if (active && payload && payload.length) {
                           const d = payload[0].payload
                           return (
-                            <div className="rounded-2xl border border-slate-700 bg-slate-900/95 p-3 shadow-xl text-xs">
-                              <p className="font-bold text-white">{d.fullName}</p>
-                              <p className="text-slate-400">{d.date}</p>
-                              <p className="mt-1 font-bold text-emerald-400">
+                            <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-xl text-xs space-y-0.5">
+                              <p className="font-bold text-slate-900">{d.fullName}</p>
+                              <p className="text-slate-500">{d.date}</p>
+                              <p className="mt-1 font-bold text-indigo-600">
                                 {d.aciertos} de {d.total} aciertos ({d.porcentaje}%)
                               </p>
                             </div>
@@ -212,7 +215,7 @@ export default function Analytics() {
                         return null
                       }}
                     />
-                    <Bar dataKey="porcentaje" fill="#6366f1" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="porcentaje" fill="#4f46e5" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -226,30 +229,35 @@ export default function Analytics() {
       </div>
 
       {/* ───────────────── DIAGNÓSTICO DETALLADO POR MATERIA ───────────────── */}
-      <section className="card p-6" aria-label="Desglose de materias">
-        <h3 className="section-title mb-4">Desglose y Puntos Débiles por Materia</h3>
+      <section className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs space-y-4" aria-label="Desglose de materias">
+        <div>
+          <h3 className="font-display text-base font-bold text-slate-900">Desglose y Dominio por Materia</h3>
+          <p className="text-xs text-slate-500">Revisa qué materias ya tienes bien preparadas y cuáles necesitan más atención.</p>
+        </div>
+
         <div className="space-y-3">
           {masteryList.map((m) => {
             const isWeak = m.mastery < 60
             return (
               <div
                 key={m.id}
-                className="flex flex-col gap-3 rounded-2xl border border-white/6 bg-ink-950/40 p-4 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex items-center gap-3">
                   <SubjectIcon subjectId={m.id} size="sm" />
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="font-bold text-white text-sm">{m.name}</p>
+                      <p className="font-bold text-slate-900 text-sm">{m.name}</p>
                       {isWeak && (
-                        <span className="chip border-rose-400/40 bg-rose-500/15 text-rose-300 text-[10px]">
-                          Refuerzo prioritario
+                        <span className="rounded-full bg-rose-100 text-rose-800 text-[10px] font-bold px-2 py-0.5 border border-rose-200">
+                          Refuerzo recomendado
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-ink-300 mt-0.5">
-                      <span>Temas estudiados: {m.topics}%</span>
-                      <span>Aciertos en simulacros: {m.accuracy}%</span>
+                    <div className="flex items-center gap-3 text-xs text-slate-500 mt-0.5">
+                      <span>Clases dominadas: {m.topics}%</span>
+                      <span>•</span>
+                      <span>Aciertos en quizzes: {m.accuracy}%</span>
                     </div>
                   </div>
                 </div>
@@ -258,15 +266,15 @@ export default function Analytics() {
                   <div className="flex-1">
                     <ProgressBar value={m.mastery} color={m.color} height={7} />
                   </div>
-                  <span className="font-display font-extrabold text-sm text-white w-10 text-right tabular-nums">
+                  <span className="font-display font-black text-sm text-slate-800 w-10 text-right tabular-nums">
                     {m.mastery}%
                   </span>
                   <button
                     type="button"
                     onClick={() => navigate('ruta', { subject: m.id })}
-                    className="btn btn-ghost px-2.5 py-1 text-xs"
+                    className="btn btn-ghost px-3 py-1.5 text-xs font-bold"
                   >
-                    Estudiar
+                    Ver clases
                   </button>
                 </div>
               </div>
@@ -276,16 +284,16 @@ export default function Analytics() {
       </section>
 
       {/* ───────────────── VITRINA COMPLETA DE LOGROS ───────────────── */}
-      <section className="card p-6" aria-label="Vitrina de Logros">
-        <div className="flex items-center justify-between mb-4">
+      <section className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs space-y-4" aria-label="Vitrina de Logros">
+        <div className="flex items-center justify-between">
           <div>
-            <h3 className="section-title">Insignias y Logros Desbloqueables</h3>
-            <p className="text-xs text-ink-300 mt-1">
-              Pequeñas victorias que celebran tu constancia, estudio y simulacros.
+            <h3 className="font-display text-base font-bold text-slate-900">Insignias y Medallas Desbloqueadas</h3>
+            <p className="text-xs text-slate-500">
+              Recompensas que celebran tu constancia, tus clases leídas y tus quizzes aprobados.
             </p>
           </div>
-          <span className="chip border-mint-400/30 bg-mint-400/10 text-mint-300 font-bold">
-            {badges.filter((b) => b.unlocked).length} / {badges.length} Desbloqueados
+          <span className="rounded-full bg-indigo-50 border border-indigo-200 px-3 py-1 text-xs font-black text-indigo-700">
+            {badges.filter((b) => b.unlocked).length} / {badges.length} Ganadas
           </span>
         </div>
 

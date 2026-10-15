@@ -4,7 +4,7 @@
  * - Resumen rápido de cómo va Ingrid (temas listos, quizzes hechos, tareas entregadas).
  * - Banco de Tareas y Retos ECOEMS listos para asignar con 1 solo clic.
  * - Bandeja para revisar tareas entregadas con fotos de su libreta y dejarle calificación/comentarios.
- * - Selector rápido para cambiar el tema sugerido del día.
+ * - Dificultad visible SOLO para Brian.
  */
 import { useMemo, useState } from 'react'
 import {
@@ -107,12 +107,12 @@ export default function TutorDashboard() {
     setActiveTab('asignadas')
     toast({
       tone: 'success',
-      title: '¡Tarea asignada con éxito! 🚀',
-      description: `"${customTitle}" ya le aparece a Ingrid.`,
+      title: '¡Tarea creada y asignada!',
+      description: 'Ingrid ya puede verla y subir su foto de libreta.',
     })
   }
 
-  // Guardar calificación
+  // Guardar calificación de Brian
   const handleSaveReview = () => {
     if (!reviewingTask) return
 
@@ -134,19 +134,19 @@ export default function TutorDashboard() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto animate-fade-up">
       {/* ───────── 1. ENCABEZADO DEL TUTOR ───────── */}
-      <div className="card p-6 bg-linear-to-r from-iris-600/15 via-ink-850 to-mint-500/10 border-iris-500/25">
+      <div className="rounded-3xl border border-indigo-200 bg-linear-to-r from-indigo-50/80 via-white to-emerald-50/60 p-6 sm:p-7 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <span className="chip border-iris-400/30 bg-iris-500/20 text-iris-300 font-bold text-[11px]">
+            <span className="rounded-full bg-indigo-100 border border-indigo-200 px-3 py-1 text-xs font-black text-indigo-700">
               Panel de Asesoría ECOEMS / COMIPEMS
             </span>
-            <h1 className="text-2xl font-extrabold text-white">
+            <h1 className="font-display text-2xl sm:text-3xl font-black text-slate-900 mt-1">
               Monitoreo de {state.profile.student}
             </h1>
-            <p className="text-xs text-ink-300">
-              Aquí puedes asignarle tareas con 1 clic de nuestro catálogo, revisar fotos de su libreta y ver en qué materias va floja.
+            <p className="text-xs sm:text-sm text-slate-600">
+              Supervisa su avance, asígnale tareas preparadas con 1 clic y califica las fotos de su libreta.
             </p>
           </div>
 
@@ -154,7 +154,7 @@ export default function TutorDashboard() {
             <button
               type="button"
               onClick={() => setActiveTab('catalogo')}
-              className={`btn text-xs font-bold ${activeTab === 'catalogo' ? 'btn-primary' : 'btn-ghost'}`}
+              className="btn btn-primary text-xs font-black px-4 py-2.5 shadow-md shadow-indigo-200 cursor-pointer"
             >
               + Asignar Tarea Lista
             </button>
@@ -162,34 +162,35 @@ export default function TutorDashboard() {
         </div>
 
         {/* Resumen de salud académica */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-5 border-t border-white/8 text-center">
-          <div className="bg-ink-950/40 p-3 rounded-xl border border-white/5">
-            <p className="text-[10px] text-ink-300 uppercase font-bold tracking-wider">Temas listos</p>
-            <p className="text-xl font-extrabold text-mint-400 mt-0.5">{global.dominado} / {global.total}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-5 border-t border-slate-200/80 text-center">
+          <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+            <p className="text-[10px] text-slate-500 uppercase font-black tracking-wider">Clases listas</p>
+            <p className="text-xl font-black text-emerald-600 mt-0.5">{global.dominado} / {global.total}</p>
           </div>
-          <div className="bg-ink-950/40 p-3 rounded-xl border border-white/5">
-            <p className="text-[10px] text-ink-300 uppercase font-bold tracking-wider">Por revisar</p>
-            <p className={`text-xl font-extrabold mt-0.5 ${pendingReviews.length ? 'text-amber-400' : 'text-white'}`}>
+          <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+            <p className="text-[10px] text-slate-500 uppercase font-black tracking-wider">Por calificar</p>
+            <p className={`text-xl font-black mt-0.5 ${pendingReviews.length ? 'text-amber-600' : 'text-slate-800'}`}>
               {pendingReviews.length} entregas
             </p>
           </div>
-          <div className="bg-ink-950/40 p-3 rounded-xl border border-white/5">
-            <p className="text-[10px] text-ink-300 uppercase font-bold tracking-wider">Quizzes hechos</p>
-            <p className="text-xl font-extrabold text-iris-300 mt-0.5">{state.history.length}</p>
+          <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+            <p className="text-[10px] text-slate-500 uppercase font-black tracking-wider">Quizzes hechos</p>
+            <p className="text-xl font-black text-indigo-600 mt-0.5">{state.history.length}</p>
           </div>
-          <div className="bg-ink-950/40 p-3 rounded-xl border border-white/5">
-            <p className="text-[10px] text-ink-300 uppercase font-bold tracking-wider">Días seguidos</p>
-            <p className="text-xl font-extrabold text-white mt-0.5">{state.streak.count} días</p>
+          <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+            <p className="text-[10px] text-slate-500 uppercase font-black tracking-wider">Días seguidos</p>
+            <p className="text-xl font-black text-slate-900 mt-0.5">{state.streak.count} días</p>
           </div>
         </div>
       </div>
 
       {/* ───────── 2. BANDEJA DE ENTREGAS PENDIENTES DE REVISIÓN ───────── */}
       {pendingReviews.length > 0 && (
-        <section className="card p-5 border-amber-400/30 bg-amber-500/5 space-y-3">
+        <section className="rounded-3xl border border-amber-300 bg-amber-50/60 p-5 space-y-3 shadow-xs">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-amber-300 flex items-center gap-2">
-              <FileText size={16} /> {state.profile.student} ha entregado {pendingReviews.length} tarea(s) para calificar:
+            <h2 className="text-sm font-bold text-amber-950 flex items-center gap-2">
+              <FileText size={16} className="text-amber-600" />
+              {state.profile.student} ha entregado {pendingReviews.length} tarea(s) para calificar:
             </h2>
           </div>
 
@@ -197,11 +198,11 @@ export default function TutorDashboard() {
             {pendingReviews.map((task) => (
               <div
                 key={task.id}
-                className="flex items-center justify-between p-3.5 rounded-xl border border-white/8 bg-ink-950/60"
+                className="flex items-center justify-between p-4 rounded-2xl border border-amber-200 bg-white shadow-xs"
               >
                 <div className="min-w-0 space-y-0.5">
-                  <p className="text-sm font-bold text-white truncate">{task.title}</p>
-                  <p className="text-xs text-ink-300">
+                  <p className="text-sm font-bold text-slate-900 truncate">{task.title}</p>
+                  <p className="text-xs text-slate-500">
                     Materia: {SUBJECT_MAP[task.subjectId]?.name || 'General'}
                     {task.evidence?.photo && ' • Contiene foto de libreta 📸'}
                   </p>
@@ -225,14 +226,14 @@ export default function TutorDashboard() {
       )}
 
       {/* ───────── 3. PESTAÑAS: CATÁLOGO vs REDACTAR vs TAREAS ASIGNADAS ───────── */}
-      <div className="flex gap-2 border-b border-white/8 pb-2 overflow-x-auto no-scrollbar">
+      <div className="flex gap-2 border-b border-slate-200 pb-2 overflow-x-auto no-scrollbar">
         <button
           type="button"
           onClick={() => setActiveTab('catalogo')}
-          className={`px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl transition cursor-pointer shrink-0 ${
+          className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-2xl transition cursor-pointer shrink-0 border ${
             activeTab === 'catalogo'
-              ? 'bg-iris-500 text-white'
-              : 'text-ink-300 hover:text-white hover:bg-white/5'
+              ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm font-black'
+              : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'
           }`}
         >
           📚 Banco de Tareas ECOEMS ({TASK_CATALOG.length})
@@ -240,10 +241,10 @@ export default function TutorDashboard() {
         <button
           type="button"
           onClick={() => setActiveTab('crear')}
-          className={`px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl transition cursor-pointer shrink-0 ${
+          className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-2xl transition cursor-pointer shrink-0 border ${
             activeTab === 'crear'
-              ? 'bg-iris-500 text-white'
-              : 'text-ink-300 hover:text-white hover:bg-white/5'
+              ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm font-black'
+              : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'
           }`}
         >
           ✏️ Redactar Tarea Nueva
@@ -251,10 +252,10 @@ export default function TutorDashboard() {
         <button
           type="button"
           onClick={() => setActiveTab('asignadas')}
-          className={`px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl transition cursor-pointer shrink-0 ${
+          className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-2xl transition cursor-pointer shrink-0 border ${
             activeTab === 'asignadas'
-              ? 'bg-iris-500 text-white'
-              : 'text-ink-300 hover:text-white hover:bg-white/5'
+              ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm font-black'
+              : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'
           }`}
         >
           📋 Tareas Asignadas a Ingrid ({assignedTasks.length})
@@ -263,8 +264,8 @@ export default function TutorDashboard() {
 
       {/* ───────── PESTAÑA A: CATÁLOGO DE TAREAS LISTAS ───────── */}
       {activeTab === 'catalogo' && (
-        <section className="space-y-3 animate-fade-up">
-          <p className="text-xs text-slate-300">
+        <section className="space-y-3.5 animate-fade-up">
+          <p className="text-xs text-slate-600">
             Selecciona una actividad prediseñada según el tema que quieras que refuerce Ingrid esta semana.
           </p>
 
@@ -274,10 +275,10 @@ export default function TutorDashboard() {
               <button
                 type="button"
                 onClick={() => setCatalogSubject('todas')}
-                className={`rounded-lg px-3 py-1.5 font-bold transition cursor-pointer shrink-0 ${
+                className={`rounded-xl px-3 py-1.5 font-bold transition cursor-pointer shrink-0 ${
                   catalogSubject === 'todas'
                     ? 'bg-indigo-600 text-white'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
                 Todas las materias
@@ -287,10 +288,10 @@ export default function TutorDashboard() {
                   key={s.id}
                   type="button"
                   onClick={() => setCatalogSubject(s.id)}
-                  className={`rounded-lg px-3 py-1.5 font-bold transition cursor-pointer shrink-0 ${
+                  className={`rounded-xl px-3 py-1.5 font-bold transition cursor-pointer shrink-0 ${
                     catalogSubject === s.id
                       ? 'bg-indigo-600 text-white'
-                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
                   {s.name}
@@ -299,7 +300,7 @@ export default function TutorDashboard() {
             </div>
 
             <div className="flex items-center gap-2 text-xs flex-wrap">
-              <span className="text-[11px] text-slate-400 font-semibold">Dificultad (solo tú lo ves):</span>
+              <span className="text-[11px] text-slate-500 font-bold">Dificultad (solo tú lo ves):</span>
               <div className="flex gap-1.5 flex-wrap">
                 {[
                   { id: 'todas', label: 'Todos los niveles' },
@@ -313,8 +314,8 @@ export default function TutorDashboard() {
                     onClick={() => setCatalogDifficulty(d.id)}
                     className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition cursor-pointer ${
                       catalogDifficulty === d.id
-                        ? 'bg-slate-700 text-white shadow-sm'
-                        : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                        ? 'bg-slate-800 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'
                     }`}
                   >
                     {d.label}
@@ -332,7 +333,7 @@ export default function TutorDashboard() {
               return (
                 <div
                   key={cat.id}
-                  className="card p-4 flex flex-col justify-between space-y-3 border border-white/8 hover:border-white/20 transition"
+                  className="rounded-3xl border border-slate-200/90 bg-white p-5 flex flex-col justify-between space-y-3 shadow-xs hover:border-slate-300 hover:shadow-md transition"
                 >
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
@@ -345,23 +346,23 @@ export default function TutorDashboard() {
                             {DIFFICULTY_CONFIG[cat.difficulty].label}
                           </span>
                         )}
-                        <span className="chip border-white/10 bg-white/5 text-[10px] text-ink-200">
+                        <span className="rounded-md bg-slate-100 text-slate-600 px-2 py-0.5 text-[10px] font-bold">
                           {cat.ecoemsKey}
                         </span>
                       </div>
                     </div>
 
-                    <h3 className="font-bold text-sm text-white leading-snug">
+                    <h3 className="font-bold text-sm text-slate-900 leading-snug">
                       {cat.title}
                     </h3>
-                    <p className="text-xs text-ink-300 leading-relaxed">
+                    <p className="text-xs text-slate-600 leading-relaxed">
                       {cat.description}
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-white/6 text-xs">
-                    <span className="text-ink-300">
-                      Sugerido: <strong className="text-white">{cat.days} días</strong> (+{cat.points} pts)
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+                    <span className="text-slate-500">
+                      Sugerido: <strong className="text-slate-900">{cat.days} días</strong> (+{cat.points} pts)
                     </span>
 
                     <button
@@ -382,7 +383,7 @@ export default function TutorDashboard() {
           </div>
 
           {visibleCatalog.length === 0 && (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8 text-center text-xs text-slate-400">
+            <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center text-xs text-slate-500">
               No hay tareas en el catálogo con los filtros seleccionados.
             </div>
           )}
@@ -392,13 +393,13 @@ export default function TutorDashboard() {
       {/* ───────── PESTAÑA B: CREAR TAREA PERSONALIZADA ───────── */}
       {activeTab === 'crear' && (
         <section className="space-y-4 animate-fade-up">
-          <div className="card p-5 sm:p-6 space-y-4">
+          <div className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-7 space-y-4 shadow-sm">
             <div>
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <Plus size={18} className="text-mint-400" /> Redactar Tarea o Reto Personalizado
+              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <Plus size={18} className="text-indigo-600" /> Redactar Tarea o Reto Personalizado
               </h2>
-              <p className="text-xs text-slate-300 mt-1">
-                Asígnale a Ingrid una tarea específica (ej. páginas del libro, ejercicios en WhatsApp o dudas de su libreta).
+              <p className="text-xs text-slate-500 mt-1">
+                Asígnale a Ingrid una tarea específica (ej. páginas del libro, ejercicios o dudas de su libreta).
               </p>
             </div>
 
@@ -419,12 +420,12 @@ export default function TutorDashboard() {
                 <div>
                   <label className="label">Materia</label>
                   <select
-                    className="input bg-slate-950 text-white"
+                    className="input"
                     value={customSub}
                     onChange={(e) => setCustomSub(e.target.value)}
                   >
                     {SUBJECTS.map((s) => (
-                      <option key={s.id} value={s.id} className="bg-slate-900 text-white">
+                      <option key={s.id} value={s.id}>
                         {s.name}
                       </option>
                     ))}
@@ -433,16 +434,16 @@ export default function TutorDashboard() {
 
                 <div>
                   <label className="label">
-                    Nivel de dificultad <span className="text-amber-400 font-normal lowercase">(solo tú lo verás)</span>
+                    Nivel de dificultad <span className="text-amber-600 font-normal lowercase">(solo tú lo verás)</span>
                   </label>
                   <select
-                    className="input bg-slate-950 text-white"
+                    className="input"
                     value={customDiff}
                     onChange={(e) => setCustomDiff(e.target.value)}
                   >
-                    <option value="facil" className="bg-slate-900 text-white">Fácil (Conceptos base)</option>
-                    <option value="medio" className="bg-slate-900 text-white">Medio (Fórmulas y práctica)</option>
-                    <option value="dificil" className="bg-slate-900 text-white">Difícil (Complejo tipo examen)</option>
+                    <option value="facil">Fácil (Conceptos base)</option>
+                    <option value="medio">Medio (Fórmulas y práctica)</option>
+                    <option value="dificil">Difícil (Complejo tipo examen)</option>
                   </select>
                 </div>
               </div>
@@ -469,7 +470,7 @@ export default function TutorDashboard() {
                     value={customNewDays}
                     onChange={(e) => setCustomNewDays(e.target.value)}
                   />
-                  <span className="text-[11px] text-slate-400 mt-1 block">
+                  <span className="text-[11px] text-slate-500 mt-1 block">
                     Vence el {formatDate(daysFromNow(Number(customNewDays)))}
                   </span>
                 </div>
@@ -491,7 +492,7 @@ export default function TutorDashboard() {
               <div className="pt-2 flex justify-end">
                 <button
                   type="submit"
-                  className="btn btn-mint font-bold px-6 py-2.5 text-xs shadow-lg shadow-mint-500/20"
+                  className="btn btn-mint font-black px-6 py-2.5 text-xs shadow-md"
                 >
                   ✓ Asignar esta tarea a Ingrid
                 </button>
@@ -510,7 +511,7 @@ export default function TutorDashboard() {
             return (
               <div
                 key={t.id}
-                className="card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-white/8"
+                className="rounded-3xl border border-slate-200/90 bg-white p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
               >
                 <div className="space-y-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -518,12 +519,12 @@ export default function TutorDashboard() {
                       {subject?.name || 'General'}
                     </span>
                     <span
-                      className={`chip text-[10px] ${
+                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-black border ${
                         t.status === 'revisada'
-                          ? 'border-mint-400/30 bg-mint-400/10 text-mint-300'
+                          ? 'border-emerald-200 bg-emerald-100 text-emerald-800'
                           : t.status === 'entregada'
-                          ? 'border-amber-400/30 bg-amber-400/10 text-amber-300'
-                          : 'border-white/10 bg-white/5 text-ink-300'
+                          ? 'border-amber-300 bg-amber-100 text-amber-900'
+                          : 'border-slate-200 bg-slate-100 text-slate-700'
                       }`}
                     >
                       {t.status === 'revisada' ? `Calificada (${t.review?.grade}/10)` : t.status === 'entregada' ? 'Entregada por Ingrid' : 'Pendiente'}
@@ -534,8 +535,8 @@ export default function TutorDashboard() {
                       </span>
                     )}
                   </div>
-                  <h3 className="font-bold text-sm text-white truncate">{t.title}</h3>
-                  <p className="text-xs text-ink-300 line-clamp-1">{t.description}</p>
+                  <h3 className="font-bold text-sm text-slate-900 truncate">{t.title}</h3>
+                  <p className="text-xs text-slate-500 line-clamp-1">{t.description}</p>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0 justify-end pt-2 sm:pt-0">
@@ -547,7 +548,7 @@ export default function TutorDashboard() {
                         setReviewGrade(10)
                         setReviewComment('')
                       }}
-                      className="btn btn-mint text-xs px-3 py-1.5 font-bold"
+                      className="btn btn-mint text-xs px-3.5 py-1.5 font-bold"
                     >
                       Calificar
                     </button>
@@ -560,7 +561,7 @@ export default function TutorDashboard() {
                         setReviewGrade(t.review?.grade ?? 10)
                         setReviewComment(t.review?.feedback ?? '')
                       }}
-                      className="btn btn-ghost text-xs px-3 py-1.5 font-bold text-ink-200"
+                      className="btn btn-ghost text-xs px-3 py-1.5 font-bold"
                     >
                       Ver entrega
                     </button>
@@ -570,7 +571,7 @@ export default function TutorDashboard() {
                     onClick={() => {
                       if (window.confirm('¿Eliminar esta tarea?')) actions.deleteTask(t.id)
                     }}
-                    className="text-xs text-rose-400 hover:text-rose-300 px-2 py-1"
+                    className="text-xs text-rose-500 hover:text-rose-700 px-2 py-1 font-semibold"
                   >
                     Eliminar
                   </button>
@@ -607,16 +608,16 @@ export default function TutorDashboard() {
         }
       >
         <div className="space-y-4 text-xs sm:text-sm">
-          <div className="card bg-ink-950/60 p-4 border border-white/8 space-y-2">
+          <div className="rounded-2xl bg-slate-50 p-4 border border-slate-200 space-y-2">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <p className="font-bold text-white">Instrucciones que verá Ingrid:</p>
+              <p className="font-bold text-slate-900">Instrucciones que verá Ingrid:</p>
               {selectedCatalogTask?.difficulty && DIFFICULTY_CONFIG[selectedCatalogTask.difficulty] && (
                 <span className={`chip text-[10px] font-bold ${DIFFICULTY_CONFIG[selectedCatalogTask.difficulty].badge}`}>
                   Nivel: {DIFFICULTY_CONFIG[selectedCatalogTask.difficulty].label} (Solo tú lo ves)
                 </span>
               )}
             </div>
-            <p className="text-ink-200">{selectedCatalogTask?.description}</p>
+            <p className="text-slate-700">{selectedCatalogTask?.description}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -630,7 +631,7 @@ export default function TutorDashboard() {
                 value={customDays}
                 onChange={(e) => setCustomDays(e.target.value)}
               />
-              <span className="text-[11px] text-ink-400 mt-1 block">
+              <span className="text-[11px] text-slate-500 mt-1 block">
                 Fecha límite: {formatDate(daysFromNow(Number(customDays)))}
               </span>
             </div>
@@ -679,16 +680,16 @@ export default function TutorDashboard() {
         <div className="space-y-4 text-xs sm:text-sm">
           {/* Instrucciones originales de la tarea */}
           {reviewingTask?.description && (
-            <div className="card bg-ink-950/60 p-4 border border-white/8 space-y-1">
-              <p className="text-[11px] font-bold text-slate-400 uppercase">Instrucciones que le diste a Ingrid:</p>
-              <p className="text-slate-200 text-xs leading-relaxed">{reviewingTask.description}</p>
+            <div className="rounded-2xl bg-slate-50 p-4 border border-slate-200 space-y-1">
+              <p className="text-[11px] font-bold text-slate-500 uppercase">Instrucciones que le diste a Ingrid:</p>
+              <p className="text-slate-800 text-xs leading-relaxed">{reviewingTask.description}</p>
             </div>
           )}
 
           {/* Evidencia escrita */}
-          <div className="card bg-ink-950/60 p-4 border border-white/8 space-y-1.5">
-            <p className="font-bold text-mint-300">Notas de Ingrid:</p>
-            <p className="text-white italic">
+          <div className="rounded-2xl bg-slate-50 p-4 border border-slate-200 space-y-1.5">
+            <p className="font-bold text-emerald-800">Notas de Ingrid:</p>
+            <p className="text-slate-800 italic">
               {reviewingTask?.evidence?.notes || 'Sin notas escritas.'}
             </p>
           </div>
@@ -697,28 +698,30 @@ export default function TutorDashboard() {
           {reviewingTask?.evidence?.photo ? (
             <div className="space-y-2">
               <label className="label flex items-center gap-1.5">
-                <ImageIcon size={14} className="text-mint-400" /> Foto de su libreta adjunta:
+                <ImageIcon size={14} className="text-indigo-600" /> Foto de su libreta adjunta:
               </label>
-              <div className="relative rounded-2xl overflow-hidden border border-white/10 group cursor-pointer"
-                   onClick={() => setPreviewImage(reviewingTask.evidence.photo)}>
+              <div
+                className="relative rounded-2xl overflow-hidden border border-slate-200 group cursor-pointer"
+                onClick={() => setPreviewImage(reviewingTask.evidence.photo)}
+              >
                 <img
                   src={reviewingTask.evidence.photo}
                   alt="Libreta de Ingrid"
-                  className="w-full max-h-64 object-cover hover:scale-102 transition duration-200"
+                  className="w-full max-h-64 object-cover hover:scale-101 transition duration-200"
                 />
-                <span className="absolute bottom-2 right-2 chip bg-ink-950/80 text-white text-[11px]">
+                <span className="absolute bottom-2 right-2 rounded-lg bg-slate-900/80 text-white text-[11px] font-bold px-2 py-1">
                   🔍 Clic para ampliar foto
                 </span>
               </div>
             </div>
           ) : (
-            <p className="text-xs text-ink-400 italic">
+            <p className="text-xs text-slate-500 italic">
               Ingrid no adjuntó foto de libreta en esta entrega.
             </p>
           )}
 
           {/* Calificación y Comentarios del Tutor */}
-          <div className="pt-2 border-t border-white/8 space-y-3">
+          <div className="pt-2 border-t border-slate-200 space-y-3">
             <div>
               <label className="label">Calificación (0 a 10)</label>
               <input
@@ -749,10 +752,14 @@ export default function TutorDashboard() {
       {/* Visor de foto a pantalla completa */}
       {previewImage && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 p-4 cursor-zoom-out"
           onClick={() => setPreviewImage(null)}
         >
-          <img src={previewImage} alt="Evidencia ampliada" className="max-h-[90vh] max-w-[95vw] rounded-xl object-contain shadow-2xl" />
+          <img
+            src={previewImage}
+            alt="Evidencia ampliada"
+            className="max-h-[90vh] max-w-[95vw] rounded-2xl object-contain shadow-2xl border border-white/20"
+          />
         </div>
       )}
     </div>
